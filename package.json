@@ -1,6 +1,6 @@
 {
-  "name": "nationalpark",
-  "subdomain": "nationalpark",
+  "name": "mercedes",
+  "subdomain": "mercedes",
   "scripts": {
     "start": "server-http.js"
   },
@@ -12,5 +12,20 @@
     "restify": "1.4.x",
     "mongoose": "2.6.x",
     "connect": "2.7.4"
-  }
+  },
+  "description": "### Node.js, Restify, MongoDb and Mongoose",
+  "main": "Gruntfile.js",
+  "directories": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/naeemt/mercedes.git"
+  },
+  "author": "Naeem Talukdar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/naeemt/mercedes/issues"
+  },
+  "homepage": "https://github.com/naeemt/mercedes"
 }
