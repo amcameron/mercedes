@@ -9,9 +9,11 @@
     "node": "0.8.x"
   },
   "dependencies": {
-    "restify": "1.4.x",
+    "connect": "2.7.4",
+    "crypto": "0.0.3",
     "mongoose": "2.6.x",
-    "connect": "2.7.4"
+    "restify": "1.4.x",
+    "socket.io": "^1.0.4"
   },
   "description": "### Node.js, Restify, MongoDb and Mongoose",
   "main": "Gruntfile.js",

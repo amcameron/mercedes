@@ -3,15 +3,18 @@ define([
   'jquery',
   'underscore',
   'backbone',
+  'io',
   'views/MainView', 
-  'views/cabin/CabinView'
-], function ($, _, Backbone, MainView, CabinView) {
+  'views/cabin/CabinView',
+  'views/dashboard/DashboardView',
+], function ($, _, Backbone, io, MainView, CabinView, DashboardView) {
   
   var MainRouter = Backbone.Router.extend({
     routes: {
-      '*actions': 'defaultAction',
       'messages': 'showMessageAboutMongo', // All urls will trigger this route
-      'about': 'showAbout' 
+      'about': 'showAbout',
+      'dashboard': 'showDashboard', 
+      '*actions': 'defaultAction',
     }
   });
 
@@ -27,8 +30,8 @@ define([
         var mainView = new MainView();
         mainView.render();
 
-        var cabinView = new CabinView();
-        cabinView.render();
+        // var cabinView = new CabinView();
+        // cabinView.render();
 
         console.log("default route");
         
@@ -45,6 +48,15 @@ define([
       console.log("display about");
         
     });
+
+    router.on('route:showDashboard', function() {
+
+      var dashboardView = new DashboardView();
+      dashboardView.render();
+
+      console.log("We outchyea");
+
+    })
 
     Backbone.history.start();
     

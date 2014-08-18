@@ -1,6 +1,4 @@
-.container {
-  background-color: #fff;
-}
+
 body {
   color: #444;
 }
@@ -28,9 +26,6 @@ a:hover {
   list-style: none;
 }
 
-.guestbook-form-container {
-  width: 500px
-}
 
 .message {
   font-size: 110%;

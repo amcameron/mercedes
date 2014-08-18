@@ -19,8 +19,8 @@ define([
       var guestbookFormView = new GuestbookFormView();
       guestbookFormView.render();
       
-      var guestbookListView = new GuestbookListView();
-      guestbookListView.render();
+      // var guestbookListView = new GuestbookListView();
+      // guestbookListView.render();
       
       guestbookFormView.on('postMessage', function () {
         guestbookListView.render();

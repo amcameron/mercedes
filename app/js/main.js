@@ -6,7 +6,19 @@ require.config({
     jquery: 'libs/jquery/jquery-min',
     underscore: 'libs/underscore/underscore-min', // https://github.com/amdjs
     backbone: 'libs/backbone/backbone-min', // https://github.com/amdjs
-
+    io: 'http://localhost:8080/socket.io/socket.io',
+    whammy: 'http://html5-demos.appspot.com/static/getusermedia/whammy.min',    
+    cbd: 'libs/msr/common/Cross-Browser-Declarations',
+    os: 'libs/msr/common/ObjectStore',
+    asr: 'libs/msr/AudioStreamRecorder/StereoRecorder',
+    sar: 'libs/msr/AudioStreamRecorder/StereoAudioRecorder',
+    mr: 'libs/msr/AudioStreamRecorder/MediaRecorder',
+    wr: 'libs/msr/VideoStreamRecorder/WhammyRecorder',
+    wrh: 'libs/msr/VideoStreamRecorder/WhammyRecorderHelper',
+    gr: 'libs/msr/VideoStreamRecorder/GifRecorder',
+    ge: 'libs/msr/VideoStreamRecorder/lib/gif-encoder',
+    wm: 'libs/msr/VideoStreamRecorder/lib/whammy',
+    rrtc: 'libs/recordrtc/RecordRTC',
     // Require.js plugins
     text: 'libs/require/text',
 
