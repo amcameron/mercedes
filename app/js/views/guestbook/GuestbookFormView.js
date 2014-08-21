@@ -138,7 +138,8 @@ define([
           window.canvas.width = video.width;
           window.canvas.height = video.height;
           window.this.record();
-        }, 500);
+          console.log("Now triggering record...");
+        }, 1000);
       };
 
       navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
@@ -146,6 +147,7 @@ define([
 
       MediaStreamTrack.getSources(function (media_sources) {
           var counter = 0;
+          window.cameraCounter = 1;
           for (var i = 0; i < media_sources.length; i++) {
               var media_source = media_sources[i];
               var constraints = {};
@@ -161,45 +163,46 @@ define([
 
               // if video device
               if (media_source.kind == 'video') {
-                  constraints.video = {
-                      mandatory: {
-                          // chromeMediaSource: 'screen',
-                          minWidth: 640,
-                          minHeight: 480,
+                window.cameraCounter++;
+                  // constraints.video = {
+                  //     mandatory: {
+                  //         // chromeMediaSource: 'screen',
+                  //         minWidth: 1920,
+                  //         minHeight: 1080,
 
-                          maxWidth: 640,
-                          maxHeight: 480,
-                      },
-                      optional: [{
-                          sourceId: media_source.id
-                      }]
-                  };
-                  console.log("Dis is " + media_source.kind);
-                  console.log(i);
+                  //         maxWidth: 1920,
+                  //         maxHeight: 1080,
+                  //     },
+                  //     optional: [{
+                  //         sourceId: media_source.id
+                  //     }]
+                  // };
+                  // console.log("Dis is " + media_source.kind);
+                  // console.log(i);
 
-                  navigator.getUserMedia(constraints, function(stream) {
+                  // navigator.getUserMedia(constraints, function(stream) {
 
-                    var options = {
-                       type: 'video',
-                       video: {
-                          width: 640,
-                          height: 480
-                       },
-                       canvas: {
-                          width: 640,
-                          height: 480
-                       }
-                    };
-                    window.recordRTC[counter] = RecordRTC(stream, options);
-                    recordRTC[counter].startRecording();
+                  //   var options = {
+                  //      type: 'video',
+                  //      video: {
+                  //         width: 640,
+                  //         height: 480
+                  //      },
+                  //      canvas: {
+                  //         width: 640,
+                  //         height: 480
+                  //      }
+                  //   };
+                  //   window.recordRTC[counter] = RecordRTC(stream, options);
+                  //   recordRTC[counter].startRecording();
 
-                    window.globalStream.push(stream);
-                    $($('video')[counter]).attr('src',window.URL.createObjectURL(stream));
-                    counter++;
-                    window.camera = "Camera"+counter;
-                  }, function(e) {
-                    console.log("No video.");
-                  });
+                  //   window.globalStream.push(stream);
+                  //   $($('video')[counter]).attr('src',window.URL.createObjectURL(stream));
+                  //   counter++;
+                  //   window.camera = "Camera"+counter;
+                  // }, function(e) {
+                  //   console.log("No video.");
+                  // });
                   
               }
 
@@ -225,33 +228,39 @@ define([
       window.canvas_HEIGHT = window.canvas.height;
       window.canvas_WIDTH = window.canvas.width;
 
+      for(x = 0; x < window.cameraCounter; x++ ){
+        var clientName = window.globalSession.split("cl:")[1]+"_"+x;
+        window.socket.emit('start_camera', {message:x+"K:K"+clientName});
+      }
+
       window.fmz = [[],[],[],[]]; // clear existing frames;
       startTime = Date.now();
 
       window.this.toggleActivateRecordButton();
       $('#stop-me').prop('disabled', false);
 
-      function drawVideoFrame_(time) {
+      function drawVideoFrame_() {
         
-        rafId = requestAnimationFrame(drawVideoFrame_);
-        for(x = 0; x < $('video[src]').length; x++ ){
+        // rafId = requestAnimationFrame(drawVideoFrame_);
+        for(x = 0; x < window.cameraCounter; x++ ){
             
 
-          ctx[x].drawImage($('video')[x], 0, 0, window.canvas_WIDTH, window.canvas_HEIGHT);
+          // ctx[x].drawImage($('video')[x], 0, 0, window.canvas_WIDTH, window.canvas_HEIGHT);
 
           //console.log('Recording...' + Math.round((Date.now() - startTime) / 1000) + 's');
 
           // Read back window.canvas as webp.
           //console.time('window.canvas.dataURL() took');
-          var url = window.canvas[x].toDataURL('image/webp', 1); // image/jpeg is way faster :(
+          // var url = window.canvas[x].toDataURL('image/webp', 1); // image/jpeg is way faster :(
           //console.timeEnd('window.canvas.dataURL() took');
           //console.log(url);
-          var clientName = window.globalSession.split("cl:")[1]+x;
-          window.socket.emit('message', {message:url+"K:K"+clientName});
-          window.previewImage[x] = url;
+          var clientName = window.globalSession.split("cl:")[1]+"_"+x;
+          console.log("NOW EMITING:"+x+"K:K"+clientName);
+          window.socket.emit('message', {message:x+"K:K"+clientName});
+          // window.previewImage[x] = url;
           // console.log(url);
           
-          window.fmz[x].push(url);
+          // window.fmz[x].push(url);
 
        }
         // UInt8ClampedArray (for Worker).
@@ -261,52 +270,62 @@ define([
         //frames.push(ctx.getImageData(0, 0, window.canvas_WIDTH, window.canvas_HEIGHT));
       };
 
-      rafId = requestAnimationFrame(drawVideoFrame_);
+      // rafId = requestAnimationFrame(drawVideoFrame_);
+      window.refreshIntervalId = setInterval(function() {
+        drawVideoFrame_();
+        console.log("Now triggering frame...");
+      }, 3000);
+
     },
 
     stopCamera: function() {
-      cancelAnimationFrame(rafId);
-      endTime = Date.now();
-      $('#stop-me').disabled = true;
-      document.title = window.ORIGINAL_DOC_TITLE;
+      // cancelAnimationFrame(rafId);
+      // endTime = Date.now();
+      console.log("Stop in the name of the law!");
+      clearInterval(window.refreshIntervalId);
+      window.socket.emit('stop_cam', {message:"hey"});
+      window.socket.emit('stop_cam', {message:"hey"});
+      window.socket.emit('stop_cam', {message:"hey"});
+      // $('#stop-me').disabled = true;
+      // document.title = window.ORIGINAL_DOC_TITLE;
 
-      window.this.toggleActivateRecordButton();
+      // window.this.toggleActivateRecordButton();
 
-      console.log('frames captured: ' + frames.length + ' => ' +
-                  ((endTime - startTime) / 1000) + 's video');
+      // console.log('frames captured: ' + frames.length + ' => ' +
+      //             ((endTime - startTime) / 1000) + 's video');
 
       window.this.embedVideoPreview();
     },
 
     embedVideoPreview: function(opt_url) {
       console.log("We've made it here!");
-      var url = opt_url || null;
-      var video = $('#video-preview video') || null;
-      var downloadLink = $('#video-preview a[download]') || null;
+      // var url = opt_url || null;
+      // var video = $('#video-preview video') || null;
+      // var downloadLink = $('#video-preview a[download]') || null;
 
-      if (!video) {
-        video = document.createElement('video');
-        video.autoplay = true;
-        video.controls = true;
-        video.loop = true;
-        //video.style.position = 'absolute';
-        //video.style.top = '70px';
-        //video.style.left = '10px';
-        video.style.width = window.canvas.width + 'px';
-        video.style.height = window.canvas.height + 'px';
-        $('#video-preview').appendChild(video);
+      // if (!video) {
+      //   video = document.createElement('video');
+      //   video.autoplay = true;
+      //   video.controls = true;
+      //   video.loop = true;
+      //   //video.style.position = 'absolute';
+      //   //video.style.top = '70px';
+      //   //video.style.left = '10px';
+      //   video.style.width = window.canvas.width + 'px';
+      //   video.style.height = window.canvas.height + 'px';
+      //   $('#video-preview').appendChild(video);
         
-        downloadLink = document.createElement('a');
-        downloadLink.download = 'capture.webm';
-        downloadLink.textContent = '[ download video ]';
-        downloadLink.title = 'Download your .webm video';
-        var p = document.createElement('p');
-        p.appendChild(downloadLink);
-        $('#video-preview').appendChild(p);
+      //   downloadLink = document.createElement('a');
+      //   downloadLink.download = 'capture.webm';
+      //   downloadLink.textContent = '[ download video ]';
+      //   downloadLink.title = 'Download your .webm video';
+      //   var p = document.createElement('p');
+      //   p.appendChild(downloadLink);
+      //   $('#video-preview').appendChild(p);
 
-      } else {
-        window.URL.revokeObjectURL(video.src);
-      }
+      // } else {
+      //   window.URL.revokeObjectURL(video.src);
+      // }
 
       // https://github.com/antimatter15/whammy
       // var encoder = new Whammy.Video(1000/60);
@@ -320,24 +339,27 @@ define([
       //   url = window.URL.createObjectURL(webmBlob);
       // }
 
-      jQuery.each( window.recordRTC, function( i, val ) {
+      // jQuery.each( window.recordRTC, function( i, val ) {
 
-        window.recordRTC[i].stopRecording(function(videoURL) {
-          var url = videoURL;
-          var cameranum = i+1;
-          window.socket.emit('pic', {message:window.previewImage[i]+"D:D"+window.globalSession.split("cl:")[1]+"_Camera"+cameranum+"B:B"+url});
-          console.log(videoURL);
-          console.log("Yeah bruh we got it");
-          video.src = url;
-          downloadLink.href = url;
-          console.log("Now sending...."+url);
-          window.socket.emit('vid', {message:url});
-        });
-      });
+      //   window.recordRTC[i].stopRecording(function(videoURL) {
+      //     var url = videoURL;
+      //     var cameranum = i+1;
+      //     window.socket.emit('pic', {message:window.previewImage[i]+"D:D"+window.globalSession.split("cl:")[1]+cameranum+"B:B"+url});
+      //     console.log(videoURL);
+      //     console.log("Yeah bruh we got it");
+      //     video.src = url;
+      //     downloadLink.href = url;
+      console.log("Now sending....");
+      for(x = 0; x < window.cameraCounter; x++ ){
+        window.socket.emit('vid', {message:window.globalSession.split("cl:")[1]+"_"+x});
+      }
+      
+      //   });
+      // });
 
-      jQuery.each(window.globalStream, function(e){
-        window.globalStream[e].stop();
-      });
+      // jQuery.each(window.globalStream, function(e){
+      //   window.globalStream[e].stop();
+      // });
       
     },
     

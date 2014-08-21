@@ -45,7 +45,21 @@ define([
     window.tl;
     window.counter = 0;
 
+    var onImgLoad = function(selector, callback){
+      $(selector).each(function(){
+          if (this.complete || /*for IE 10-*/ $(this).height() > 0) {
+              callback.apply(this);
+          }
+          else {
+              $(this).on('load', function(){
+                  callback.apply(this);
+              });
+          }
+      });
+    };
+
     window.socket.on('message', function(data){
+      console.log("O HAI DER SENOR");
       var master_Client = data.message.split('x:x')[0];
       var thumbnail = data.message.split('x:x')[1].split("K:K")[0];
       var theName = data.message.split('x:x')[1].split("K:K")[1];
@@ -56,7 +70,9 @@ define([
         // console.log("You are the invigilator");
         $("#video-preview").show();
         $('#tester-preview').hide();
-        if(thumbnail.indexOf('data:image/webp') != -1){
+        if(thumbnail.indexOf('jpg') != -1){
+          var newImg = document.createElement("img");
+          $(newImg).attr("id","theImg").attr("height","200px").attr("width","300px").attr("src","/temp/"+thumbnail);
           console.log("Got one!");
           console.log(theName);
           if(!$("#lightbox-"+theName).length){
@@ -64,7 +80,13 @@ define([
             $(newDiv).attr("id","lightbox-"+theName).addClass("thumbnails").css("float","left").css("border","3px solid white").css("margin-right","5%").css("margin-bottom","5%")
             $("#s1").append(newDiv);
           }
-          $("#lightbox-"+theName).html('<img id="theImg" src="'+thumbnail+'" />');
+          if(!$("#lightbox-"+theName).find('img').length){
+            $("#lightbox-"+theName).html(newImg);
+            $("#lightbox-"+theName).append("<div><label for='theImg' contenteditable='true'>Click here to name Camera</label></div>");
+          } else {
+            $("#lightbox-"+theName).find('img').attr("src","/temp/"+thumbnail)
+          }
+
           if(window.counter == 7){
             window.counter = 0;
           } else {
@@ -89,7 +111,39 @@ define([
       $('#numu').html(testers.length);
     });
 
+    window.socket.on('progress', function(data){
+      var name = data.message.split("Q:Q")[0];
+      var progress = data.message.split("Q:Q")[1];
+      console.log(data.message);
+      console.log(progress);
+      $("#videos").show();
+      if(!$("#span-"+name).length)
+        $("#videos").append($(document.createElement("span")).attr("id","span-"+name));
+      var string = name;
+      if($("#lightbox-"+name+" label").html() != "Click here to name Camera"){
+        string = name.split("_")[0]+"_"+$("#lightbox-"+name+" label").html();
+      }
+      $("#span-"+name).html('Converting video for '+string+', please wait....elapsed time '+progress+'<br/>');
+    });
+
     window.socket.on('vid', function(data){
+      var a = document.createElement("a");
+      var a2 = document.createElement("a");
+      a.download = data.message.split(".")[0]+".webm";
+      a2.download = data.message.split(".")[0]+".mpg";
+      if($("#lightbox-"+data.message.split(".")[0]+" label").html() != "Click here to name Camera"){
+        a.download = data.message.split(".")[0].split("_")[0]+"_"+$("#lightbox-"+data.message.split(".")[0]+" label").html()+".webm";
+        a2.download = data.message.split(".")[0].split("_")[0]+"_"+$("#lightbox-"+data.message.split(".")[0]+" label").html()+".mpg";
+      }
+      a.href = data.message.split(".")[0]+".webm";
+      a2.href = data.message.split(".")[0]+".mpg";
+      $(a).html("here");
+      a2.click();
+      a.click();
+      console.log("downloading!"+data.message.split(".")[0]+".webm");
+      if(!$("#span-"+data.message.split(".")[0]).length)
+        $("#videos").append($(document.createElement("span")).attr("id","span-"+data.message.split(".")[0]));
+      $("#span-"+data.message.split(".")[0]).html('Video '+data.message.split(".")[0]+'.webm finished converting. Click <a href="'+a.href+'" download="'+a.download+'">here</a> to download.<br/>');
       var master_Client = data.message.split('x:x')[0];
       var url = data.message.split('x:x')[1];
       $("#saveVideo").show();
@@ -152,6 +206,7 @@ define([
     window.globalSession = "cl:"+window.globalSession;
 
     window.socket.on('message', function(data){
+      console.log("WE GOT SOMETHING");
       var master_Client = data.message.split('x:x')[0];
       var thumbnail = data.message.split('x:x')[1];
       console.log(master_Client);

@@ -14,6 +14,8 @@ var sys = require('sys')
 var exec = require('child_process').exec;
 var spawn = require('child_process').spawn;
 var child;
+var mime = require('mime');
+
 
 //Sockets
 var io = require('socket.io');
@@ -38,12 +40,26 @@ var sendHTML = function( filePath, contentType, response ){
   path.exists(filePath, function( exists ) {
      
         if (exists) {
+            var bytesize = 0;
+            fs.stat(filePath, function (err, stats) {
+              if(filePath.match(".webm")){
+              console.log(filePath);
+              console.log(stats.size);
+              bytesize = stats.size;
+              }
+            });
+            var start = 0;
+            var end = 1;
+            var chunk = end - start + 1;
             fs.readFile(filePath, function(error, content) {
                 if (error) {
                     response.writeHead(500);
                     response.end();
                 }
                 else {
+                  if(!filePath.match('.webm'))
+                    response.writeHead(200, { 'Content-Type': contentType });
+                  else
                     response.writeHead(200, { 'Content-Type': contentType });
                     response.end(content, 'utf-8');
                 }
@@ -69,7 +85,7 @@ var getFilePath = function(url) {
 var getContentType = function(filePath) {
    
    var extname = path.extname(filePath);
-   var contentType = 'text/html';
+   var contentType = mime.lookup(filePath);
     
     switch (extname) {
         case '.js':
@@ -115,7 +131,12 @@ var server = httpServer.createServer(onHtmlRequestHandler).listen(httpPort);
 var webSocket = io.listen(server);
 var clients = [];
 var sockets = [];
+var children = [];
 console.log("here we are");
+
+
+
+
 
 // child = exec("xmessage hi", function (error, stdout, stderr) {
 //   sys.print('stdout: ' + stdout);
@@ -150,18 +171,115 @@ webSocket.sockets.on('connection', function (client) {
       // console.log("The message is"+msg);
       if(mg.indexOf('cl:') != -1)
         client.emit('message', {message: msg});
-      
-      client.broadcast.emit('message', {message: msg});
-    });
 
+      var imageName = msg.split('x:x')[1].split("K:K")[1];
+      var cameraNumber = msg.split('x:x')[1].split("K:K")[0];
+      var uniqueId = new Date().getTime();
+      var child2 = spawn("rm", ['-Rf','app/temp']);
+      children.push(child2);
+      child2.on('close', function (code) {
+        console.log('deletedfile');
+        var child3 = spawn("mkdir", ['app/temp/']);
+        child3.on('close', function (code) {
+          console.log('created folder');
+          var child = spawn("ffmpeg", ['-f','avfoundation','-i',''+cameraNumber+'','-vframes','1','app/temp/'+imageName+'_'+uniqueId+'.jpg']);
+          children.push(child);
+          child.stdout.on('data', function (data) {
+            console.log('stdout: ' + data);
+          });
+          child.on('close', function (code) {
+            console.log('child process exited with code ' + code);
+            if(typeof imageName != 'undefined'){
+              var msg = clients[0]+'x:x'+imageName+"_"+uniqueId+'.jpgK:K'+imageName;
+              client.broadcast.emit('message', {message: msg});
+              child.kill();
+            }
+          });
+          child.stderr.on('data', function (data) {
+            console.log('stderr: ' + data);
+          });
+        });
+
+
+      });
+      console.log(imageName);
+      // var child2 = spawn("rm", ['-Rf',imageName+'.jpg']);
+      // child2.on('close', function (code) {
+      //   console.log('deletedfile');
+      //   var child = spawn("ffmpeg", ['-f','avfoundation','-i','0','-vframes','1','outie1.jpg']);
+      //   child.stdout.on('data', function (data) {
+      //     console.log('stdout: ' + data);
+      //     child.kill();
+      //   });
+      //   child.on('close', function (code) {
+      //     child.stdin.pause();
+      //     child.kill();
+      //     console.log('child process exited with code ' + code);
+      //     var msg = clients[0]+'x:x'+imageName+'.jpgK:K'+imageName;
+      //     client.broadcast.emit('message', {message: msg});
+      //   });
+      //   child.stderr.on('data', function (data) {
+      //     console.log('stderr: ' + data);
+      //     child.stdin.pause();
+      //     child.kill();
+      //   });
+      //   child2.stdin.pause();
+      //   child2.kill();
+      // });
+
+
+
+    });
+  
+    client.on('start_camera', function(data) {
+      console.log("START CAMERA TRIGGERED");
+      var imageName = data.message.split("K:K")[1];
+      var cameraNumber = data.message.split("K:K")[0];
+
+      var child2 = spawn("rm", ['-Rf','app/'+imageName+'.mpg']);
+      children.push(child2);
+      child2.on('close', function (code) {
+        console.log('deletedfile');
+        var child = spawn("ffmpeg", ['-f','avfoundation','-i',''+cameraNumber+'','app/'+imageName+'.mpg']);
+        children.push(child);
+        child.stdout.on('data', function (data) {
+          console.log('stdout: ' + data);
+        });
+        child.on('close', function (code) {
+          console.log('child process exited with code ' + code);
+        });
+        child.stderr.on('data', function (data) {
+          console.log('stderr: ' + data);
+        });
+      });
+    })
+
+    client.on('stop_cam', function(data) {
+      console.log('killing', children.length, 'child processes');
+      children.forEach(function(child) {
+        child.kill();
+      });
+    })
     client.on('vid', function(data) {
       var mg = data.message;
       if(mg.indexOf('cl:') == 0){
         clients.push(mg.split('cl:')[1])
       }
-
-      var msg = clients[0]+'x:x'+data.message;
-      client.broadcast.emit('vid', {message: msg});
+      console.log("WE GOT A VIDEO");
+      var msg = data.message+'.mpg';
+      var child = spawn("ffmpeg", ['-i','app/'+msg+'','-s','640x480','app/'+data.message+'.webm']);
+      child.stdout.on('data', function (data) {
+        console.log('trying webm convert');
+      });
+      child.on('close', function (code) {
+        console.log('finished webm convert');
+        client.broadcast.emit('vid', {message: msg});
+      });
+      child.stderr.on('data', function (data) {
+        console.log('issue with webm convert: ' + data.toString().split("time=")[1]);
+        client.broadcast.emit('progress', {message: mg+"Q:Q"+data.toString().split("time=")[1]});
+      });
+      
     })
 
     client.on('dl', function(data) {
@@ -326,6 +444,10 @@ mongodbServer.listen(mongodbPort, function() {
   consoleMessage += '+++++++++++++++++++++++++++++++++++++++++++++++++++++ \n\n'  
  
   console.log(consoleMessage, mongodbServer.name, mongodbServer.url);
+  mime.define({
+      'video/webm': ['webm']
+  });
+  console.log("Now looking up..."+mime.lookup('http://localhost:8080/radical1.webm'));
 
 });
 

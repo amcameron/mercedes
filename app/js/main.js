@@ -6,7 +6,7 @@ require.config({
     jquery: 'libs/jquery/jquery-min',
     underscore: 'libs/underscore/underscore-min', // https://github.com/amdjs
     backbone: 'libs/backbone/backbone-min', // https://github.com/amdjs
-    io: 'http://localhost:8080/socket.io/socket.io',
+    io: '../socket.io/socket.io',
     whammy: 'http://html5-demos.appspot.com/static/getusermedia/whammy.min',    
     cbd: 'libs/msr/common/Cross-Browser-Declarations',
     os: 'libs/msr/common/ObjectStore',

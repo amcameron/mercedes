@@ -147,13 +147,13 @@ body {
   margin: auto;
   width: 960px; 
 }
-.thumbnails, video, #videos img {
+/*.thumbnails, video, #videos img {
   -moz-transform: scale(-1, 1);
   -webkit-transform: scale(-1, 1);
   -o-transform: scale(-1, 1);
   transform: scale(-1, 1);
   filter: FlipH;
-}
+}*/
 
 .thumbs:hover {
   cursor: pointer;
