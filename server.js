@@ -1,4 +1,12 @@
 
+//Variables you can change
+
+var downloadPath = '/Users/naeem/Downloads'; //Path to Downloads folder with no trailing forward slash
+var localFilePath = '/Users/naeem/Documents/Summer\ Research/mercedes'; //Path to locally hosted mercedes folder with no trailing forward slash
+var chromeAlias ='/Applications/Google\ Chrome.app'; //Whatever the alias or location is for Google Chrome (try open alias on shell to test)
+
+//DONT TOUCH ANYTHING ELSE UNLESS YOU KNOW WHAT YOU'RE DOING
+
 //http server
 var fs = require('fs');
 var httpServer = require('http');
@@ -251,6 +259,80 @@ webSocket.sockets.on('connection', function (client) {
         child.stderr.on('data', function (data) {
           console.log('stderr: ' + data);
         });
+      });
+    })
+
+    client.on('annotate', function(data){
+
+    });
+
+    client.on('dashboard', function(data){
+      console.log(data.message);
+      client.emit('localpath', {message: localFilePath});
+      var child = spawn("ls", [downloadPath]);
+      children.push(child);
+      var sendArray = [];
+      var dlArray = [];
+      child.stdout.on('data', function (data) {
+        // console.log('stdout: ' + data.toString().split("\n"));
+        var newArray = data.toString().split("\n");
+        for(var y = 0; y < newArray.length; y++){
+          dlArray.push(newArray[y]);
+        } 
+        // console.log(sendArray);
+        // 
+      });
+      child.on('close', function (code) {
+
+        for (var i=dlArray.length-1; i>=0; i--) {
+          // console.log("What we got: "+sendArray[i]+"\r");
+            if (!dlArray[i].match(".mpg") && !dlArray[i].match(".webm")) {
+                dlArray.splice(i, 1);
+                // break;       //<-- Uncomment  if only the first term has to be removed
+            } else {
+              sendArray.push(dlArray[i]);
+            }
+        }
+        var child3 = spawn("ls", ["app/unprocessed_vids"]);
+
+        child3.stdout.on('data', function (data) {
+        console.log('stdout: ' + data.toString().split("\n"));
+        var newArray = data.toString().split("\n");
+        for(var y = 0; y < newArray.length; y++){
+          sendArray.push(newArray[y]);
+        }     
+        });
+        child3.on('close', function (code) {
+        for (var i=sendArray.length-1; i>=0; i--) {
+          // console.log("What we got: "+sendArray[i]+"\r");
+            if (!sendArray[i].match(".mpg") && !sendArray[i].match(".webm")) {
+                sendArray.splice(i, 1);
+                // break;       //<-- Uncomment  if only the first term has to be removed
+            }
+        }
+        console.log('child process dashboard exited with code ' + code);
+        client.emit('dashboard', {message: sendArray});
+        for(x = 0; x < dlArray.length; x++){
+          var value = dlArray[x];
+          console.log("HELLO! "+value+" \n");
+          var child2 = spawn("mv", [downloadPath+'/'+value,'app/unprocessed_vids']);
+          child2.stdout.on('data', function(data){
+            console.log('stdout: ' +data);
+          })
+          child2.stderr.on('data', function(data){
+            console.log('stderr: ' + data);
+          })
+          child2.on('close', function(code){
+            console.log("close with " + code);
+            child2.kill();
+          })
+        }
+        child3.kill();
+      });
+        child.kill();
+      });
+      child.stderr.on('data', function (data) {
+        console.log('stderr: ' + data);
       });
     })
 

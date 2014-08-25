@@ -1,115 +1,74 @@
-<style>
-#video_box{
-    float:left;
-}
-#video_overlays {
-position:absolute;
-float:left;
-    width:640px;
-    height:37px;
-    background-color:rgba(255,0,0,0.5);
-    z-index:300000;
-}
-button {
-    color: black !important;
-}
-</style>
-<div class="site-wrapper">
+<nav class="navbar navbar-fixed-top" style="border-bottom: 3px solid #AFCE8B; margin-bottom: 0px;" role="navigation">
+  <div class="container-fluid">
+    <!-- Brand and toggle get grouped for better mobile display -->
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="#">video<strong>dashboard</strong></a>
+    </div>
 
-    <div class="site-wrapper-inner">
+    <!-- Collect the nav links, forms, and other content for toggling -->
+    <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
 
-        <div class="cover-container container1">
-
-        <center><p style="float: left;">Frame: &nbsp;</p> <p style="float: left;" id="time">0</p></center><br/><br/>
-        
-        <div id="video_box">
-        <div id="video_overlays">No blink detected</div>
-        <video id="v0" controls tabindex="0" autobuffer preload style="-moz-transform: scale(1, 1) !important;
--webkit-transform: scale(1, 1) !important;
--o-transform: scale(1, 1) !important;
-transform: scale(1, 1) !important;">
-            <source type="video/mp4; codecs=&quot;avc1.42E01E, mp4a.40.2&quot;" src="http://www.html5rocks.com/tutorials/video/basics/Chrome_ImF.mp4"></source>
-            <p>Sorry, your browser does not support the &lt;video&gt; element.</p>
-        </video>
+      <form class="navbar-form navbar-right" role="search">
+        <div class="form-group">
+          <input type="text" class="form-control" placeholder="Search" style="border: 0px !important; text-transform: lowercase !important; height: 28px !important;">
         </div>
-        <br/><Br/>
-                <button id="speed">+1</button>
-                <button id="negative">-1</button>
-                <button id="blink">Blink</button>
-                <button id="notblink">Not Blink</button>
-                <br/>
-        <div id="an" style="word-wrap: break-word;"></div>
+        <button type="submit" class="btn btn-default" style="background-color: transparent !important; border: 0px !important; color: #FBFBFB !important;"><i class="fa fa-search fa-sm"></i> </button>
+      </form>
 
 
-        <script>
-        var vid = $('#v0')[0];
-        window.socket = io.connect();
-        window.socket.emit('message', {message:"heyo"});
-        var readyUp = window.setInterval(function(t){
-          if (vid.readyState > 0) {
-            doEverything();
-          }
-        },500);
+    </div><!-- /.navbar-collapse -->
+  </div><!-- /.container-fluid -->
+</nav>
 
-        function doEverything(){
-        clearInterval(readyUp);
-        var fps = 25;
-        var num = Math.round(vid.duration*fps);
-        var annotation = new Array(num);
+<div id="wrapper" style="padding-left: 150px !important; padding-top: 50px;">
 
-        for (var i = 0; i < num; i++) annotation[i] = "No blink detected";
+        <!-- Sidebar -->
+        <div id="sidebar-wrapper">
+            <ul class="sidebar-nav">
+                <li><a href="#"><i class="fa fa-home fa-lg"></i> Dashboard</a>
+                </li>
+                <li><a href="#"><i class="fa fa-video-camera fa-lg"></i> video library</a>
+                </li>
+                <li><a href="#"><i class="fa fa-bar-chart-o fa-lg"></i> charts</a>
+                </li>
+                <li><a href="#"><i class="fa fa-file-text fa-lg"></i> annotations</a>
+                </li>
+                <li><a href="#"><i class="fa fa-gear fa-lg"></i> settings</a>
+                </li>
+                <li><a href="#"><i class="fa fa-sign-out fa-lg"></i> sign-out</a>
+                </li>
+            </ul>
+        </div>
 
-            
-        vid.onplay = vid.onclick = function() {
-            // vid.onplay = vid.onclick = null;
+        <!-- Page content -->
+        <div id="page-content-wrapper" style="text-align: left;">
 
-
-            setTimeout(function() {
-                vid.pause();
-                setInterval(function() {
-                    if($.browser.opera) {
-                        var oldHandler = vid.onplay;
-                        vid.onplay = function() {
-                            vid.pause();
-                            vid.onplay = oldHandler;
-                        };
-                        vid.play();
-                    } else {
-                        vid.currentTime += (1 / fps);
-                        console.log(vid.currentTime);
-                    }
-                }, 2000);
-            }, 12000);
-            
-            setInterval(function() {
-                $('#time').html(Math.round(vid.currentTime * fps));
-                $("#video_overlays").html(annotation[(Math.round(vid.currentTime * fps) / fps)*fps]);
-            }, 100);
-        };
+            <div class="container-fluid" style="background-color: #E6F1F6; padding-bottom: 2%; padding-top: 2%; border-bottom: 1px dashed #C5D5DD;">
+            Here is a list of all your videos. You may auto-process them individually and run the results, or send them to our manual annotation software and tag them yourself.
+            </div>
 
 
-        $("#speed").click(function() { // button function for 3x fast speed forward
-            vid.pause();
-            vid.currentTime += (1 / fps);
-        });
-        $("#negative").click(function() { // button function for rewind
-            vid.pause();
-            vid.currentTime -= (1 / fps);
-        });
+            <!-- Keep all page content within the page-content inset div! -->
+            <div class="container-fluid" style="float: left; text-align: left; padding-top: 2%;  padding-left: 2.5%; width: 95%;">
+                <div class="row">
+                    <div class="col-md-12" style="padding-left: 0px;" id="videos">
+<!--                         <p class="lead">This is your invigilator dashboard. You can access all of the videos that you have captured, as well as run annotations and analysis.</p>
+                        <hr> -->
+                    </div>
+                    <br/>
+                    <div class='col-md-4'>
 
-        $("#blink").click(function(){ 
-            annotation[(Math.round(vid.currentTime * fps) / fps)*fps] = "Blink detected!";
-            $("#video_overlays").html("Blink detected");
-        });
-        $("#notblink").click(function(){ 
-            annotation[(Math.round(vid.currentTime * fps) / fps)*fps] = "No blink detected";
-            $("#video_overlays").html("No blink detected");
-        });
-        }
-        </script>
+                    </div>
+            </div>
+        </div>
+
 
         </div>
 
     </div>
-
-</div>
