@@ -28,16 +28,19 @@ define([
         window.localPath = data.message;
       });
 
+      window.socket.on('ext', function(data){
+        window.ext = data.message;
+      });
 
       window.socket.on('dashboard', function(data){
         console.log(data.message);
         $.each(data.message, function( index, value ) {
-          if(value.match(".mpg"))
+          if(value.match(window.ext))
             window.arr.push(value);
         });
         console.log(window.arr);
         $.each(window.arr, function(i,v){
-          $("#videos").append("Video name: "+v.split('.mpg')[0]+" | (<a download="+v+" href='unprocessed_vids/"+v+"'>Download</a> : <a href='#'>Process</a> : <a class='annotate' href='#' data-url='"+window.localPath+"/app/annotate.html#video=unprocessed_vids/"+v.split('.mpg')[0]+".webm'>Annotate</a>)<br>");
+          $("#videos").append("Video name: "+v.split(window.ext)[0]+" | (<a download="+v+" href='unprocessed_vids/"+v+"'>Download</a> : <a href='#'>Process</a> : <a class='annotate' href='#' data-url='"+window.localPath+"/app/annotate.html#video=unprocessed_vids/"+v.split(window.ext)[0]+".webm'>Annotate</a>)<br>");
         });
         
       });

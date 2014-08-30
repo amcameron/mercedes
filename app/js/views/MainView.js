@@ -16,6 +16,7 @@ define([
     },
     initialize: function () {
       window.this = this;
+
       $('body').css('background-color','#333333');
     },
     thumbs: function(e){
@@ -57,6 +58,10 @@ define([
           }
       });
     };
+
+    window.socket.on('ext', function(data){
+      window.ext = data.message;
+    });
 
     window.socket.on('message', function(data){
       console.log("O HAI DER SENOR");
@@ -130,13 +135,13 @@ define([
       var a = document.createElement("a");
       var a2 = document.createElement("a");
       a.download = data.message.split(".")[0]+".webm";
-      a2.download = data.message.split(".")[0]+".mpg";
+      a2.download = data.message.split(".")[0]+window.ext;
       if($("#lightbox-"+data.message.split(".")[0]+" label").html() != "Click here to name Camera"){
         a.download = data.message.split(".")[0].split("_")[0]+"_"+$("#lightbox-"+data.message.split(".")[0]+" label").html()+".webm";
-        a2.download = data.message.split(".")[0].split("_")[0]+"_"+$("#lightbox-"+data.message.split(".")[0]+" label").html()+".mpg";
+        a2.download = data.message.split(".")[0].split("_")[0]+"_"+$("#lightbox-"+data.message.split(".")[0]+" label").html()+window.ext;
       }
       a.href = data.message.split(".")[0]+".webm";
-      a2.href = data.message.split(".")[0]+".mpg";
+      a2.href = data.message.split(".")[0]+window.ext;
       $(a).html("here");
       a2.click();
       a.click();

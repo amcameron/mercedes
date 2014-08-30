@@ -1,117 +1,47 @@
-## A Relatively Simple Example 
+## The Mercedes Application
 
-### Node.js, Restify, MongoDb and Mongoose
-
-authors: 
-
-Thomas Davis | https://github.com/thomasdavis
-
-Brandon Flowers | https://github.com/headwinds 
-
-If you would like to discuss any of this code, please your leave comments using disqus at the bottom of [the main article](http://backbonetutorials.com/nodejs-restify-mongodb-mongoose/).
-
-This README.md has four main sections:
-
-1. STRUCTURE - why are there 2 servers?!
-2. HTTP SERVER - serves static html, css, js; the front-end
-3. MONGODB - pure data services; the back-end 
-4. THE MISSING CONFIG.JS FILE - the long and short:  see configSample.js and then create your own config.js 
-
-### STRUCTURE
-
-There are basically two parts to this demo - two servers - within one file, server.js, which may sound a little confusing but the two servers do different things. 
-
-The first server, httpServer, serves up static html/js/css to the browser and the second, mongodbServer, is purely for saving and retrieving data from the mongodb.  
-
-I've put both servers in the server.js which makes it extremely long and challenging to maintain but it does the job for this demo. Also, each server is listening on its own port. If you are only allowed access to one public port, you could choose one server to listen on that port then pass the events to the other server which may be interested in different routes. For instance, in this case, if the http server listens for a /messages route, it could trigger an event and pass that to the mongo server. 
-
-In addition to server.js, I've also refactored it into two separate files: server-http.js and server-mongo.js.
-
-If you only need the mongobd server, you might start with the server-mongo folder.  
-
-### HTTP SERVER
-
-Originally, this tutorial started out as purely a mongodb one but I wanted to see the data in a browser and since this is a collection of Backbone tutorials, I might as well include some client-side backbone views. 
-
-I also started working on it before discovering Google's Yeoman which includes its own web server that serves static files thus making the HTTP portion not necessary when testing locally, however, when you move to host these files somewhere else like nodejitsu, you may need to use your own static web server if it doesn't support nginx or apache. 
-
-But before using Yeoman, you might want to try open a terminal to the directory of this app and typing:
-
-$ node server   
-
-Next, you will need to open browser and point it to:
-
-http://localhost:8080/
-
-Alternatively, you can use Yeoman which would automatically launch a browser window and also you more features like live reload. 
-
-$ yeoman server
-
-By default, yeoman looks at the "app" directory. If you update to Yeoman 1.0, you are able to configure this path in the grunt.js file and configure it to look any folder like "public" but at the time of writing this demo, I'm using Yeoman 0.9.6 so will keep the "app" directory.
- 
-Yeoman automatically launches a browser window to: 
-
-http://localhost:3501/ 
-
-http server: 
-
-If you'd like to see the raw messages as a json dump, you can point your browser to: 
-
-http://localhost:8888/messages 
-
-This static server is taken very largely (line for line) from [this example on thecodinghumanist.com](http://thecodinghumanist.com/blog/archives/2011/5/6/serving-static-files-from-node-js) and thus a very large credit should go to Eric Sowell. 
+### The Basics
 
 
-### MONGODB
+This application lets you capture video on two computers, record it, save it and post-process it. 
 
-In order to setup my mongodb database, I've taken the following steps:
 
-1. I have two terminal windows open.
+### Step 1: Running the Application
 
-2. In the the first one, I've started mongoDB: 
-$ mongod
+Running the application is easy... after you clone this repo, cd into it (i.e "cd mercedes") and use "node server.js" to run it. Note: You need to install node.js on your system in order for this to run.
 
-3. In the second, I've started the mongo shell
-$ mongo
+Rather than explaining how to do that, go to http://nodejs.org/download/
 
-In the mongo shell, I've created a database called "nationalpark"
+You need to run the application on all 3 computers -- i.e, the main computer for the invigilators as well as the 2 computers running the test.
 
-> use nationalpark 
+### Step 2: Opening the Invigilator Dashboard
 
-This will automatically create and use this new database called nationalpark 
+After you have it running on all 3 terminals, first go to your invigilator dashboard (Note: This is important -- you have to access the application from the invigilator computer before you do it from the other two).
 
-then, I've added a collection called "messages" and inserted a message
+To access the dashboard, open your web browser (use Google Chrome), and go to http://TESTER_IP:8080 ... TESTER_IP is the local IP address of each of the tester computers (since all 3 computers will be on a LAN). In other words, you will need to open up 2 seperate tabs for each of the computers.
 
-var message = { message: "onward, upward", hiker: "rosella"}; 
+Once you open both applications, click "invigilator" in both, put in the authorization, and you can fly. 
 
-> db.messages.insert(message); 
+### Step 3: Opening the tester application 
 
-Once you use nationalpark, db becomes the link to it
+Now, go to each tester computer, and go to http://localhost:8080 and click "Tester". Put in your tester authorization. Now, you can minimize the window or leave it in the background....IMPORTANT: Do not open a new tab in this Chrome Window. Open a new Chrome Window entirely for the rest of your pages.
 
-Just to prove you've added a message, you can display all the messages 
+On your invigilator dashboard, click on "Start Test" for each of the tester computers. NOTE: You may need to go to the tester computer the first time to "allow" the camera. Soon, you'll see some preview images coming to the invigilator dashboard.
 
-> db.messages.find();
+### Step 4: Naming the Camera
 
-Now, I have a database with a collection of messages containing at least one message. You view this message in the browser, visit:
+By default, the cameras will be named numbers "0, 1, 2" etc. However, you can click below the preview thumbnails to change the name... type in the name then click outside of it (don't press 'Enter').
 
-> http://localhost:8888/messages
+### Step 5: Stopping the Test
 
-## THE MISSING CONFIG.JS FILE 
+When you're done, click on "Stop Test". After you stop it, it'll take a little while to process the video... you'll see the loading at the bottom ("Converting..."). Wait until that's finished before doing anything -- it usually takes the duration of the video. So if you recorded for 7 minutes it takes 7 minutes to process/convert.
 
-If you plan to work with a public github, it is a good idea to protect your production mongodb connection uri and put it in a config file which you include in .gitignore so that it doesn't get committed  
+After converting, you can open it in the portal, (Click on "process" beside it). After it's done converting, the videos will be saved to your computer. You can see it in the "Unprocessed VIdeos" folder in the Mercedes folder. Feel free to do as you like at this point.
 
-> var config = require('./config'); // Local congig file to hide creds
-> db = mongoose.connect(config.mongoose_auth),
-> Schema = mongoose.Schema;  
+You can use the dashboard (Open localhost:8080/#dashboard in the invigilator computer) to run the bash script for each video to send it to Christian's algorithm.
 
-When you go to host it on a platform like nodejitsu, you will need to deploy that config file so ensure it is included by using a .npmignore file
+### Step 6: Manual Annotation
 
-Within my .gitignore file, I have three line to not include my config.js and my sublime project files: 
+In case the algorithm fails, and you want to do manual anotation, that is built as well. You can access it from http://localhost:8080/annotate.html#video=[URL], where URL is the local URL of the video. You can test it out here: http://localhost:8080/annotate.html#video=http://www.quirksmode.org/html5/videos/big_buck_bunny.webm
 
-config.js 
-backbone.sublime-project
-backbone.sublime-workspace 
-
-Within my .npmignore file, I have one to include the config:
-
-!./config.js
+After you're done annotating the frame-by-frame blinks, click on export to get a text file with everything.

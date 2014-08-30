@@ -2,8 +2,12 @@
 //Variables you can change
 
 var downloadPath = '/Users/naeem/Downloads'; //Path to Downloads folder with no trailing forward slash
-var localFilePath = '/Users/naeem/Documents/Summer\ Research/mercedes'; //Path to locally hosted mercedes folder with no trailing forward slash
+var localFilePath = '/Users/naeem/Documents/Summer\ Research/mercedes'; //Path to locally hosted mercedes folder with no trailing forward slash. Make sure to backslash spaces.
 var chromeAlias ='/Applications/Google\ Chrome.app'; //Whatever the alias or location is for Google Chrome (try open alias on shell to test)
+var os = "osx"; //The OS on this system -- do either "osx" or "ubuntu"
+var outputExtension = ".mpg" //What extension/encoding type do you want to output
+//Your ffmpeg script (see README). use [CAMERANO] to denote where the camera number is, and [OUTPUT] -- make the rest whatever settings you want
+var ffmpeg = "ffmpeg -f avfoundation -i [CAMERANO] [OUTPUT]"; 
 
 //DONT TOUCH ANYTHING ELSE UNLESS YOU KNOW WHAT YOU'RE DOING
 
@@ -157,6 +161,7 @@ console.log("here we are");
 
 webSocket.sockets.on('connection', function (client) {
     console.log("Wee got a connection..");
+    webSocket.sockets.emit('ext', {message: outputExtension});
     // console.log(client.id);
     
     // this works great:    
@@ -190,7 +195,11 @@ webSocket.sockets.on('connection', function (client) {
         var child3 = spawn("mkdir", ['app/temp/']);
         child3.on('close', function (code) {
           console.log('created folder');
-          var child = spawn("ffmpeg", ['-f','avfoundation','-i',''+cameraNumber+'','-vframes','1','app/temp/'+imageName+'_'+uniqueId+'.jpg']);
+          var child;
+          if(os == "osx")
+            var child = spawn("ffmpeg", ['-f','avfoundation','-i',''+cameraNumber+'','-vframes','1','app/temp/'+imageName+'_'+uniqueId+'.jpg']);
+          else
+            var child = spawn("ffmpeg", ['-f', 'v4l2', '-framerate', '25', '-video_size', '640x480', '-vframes', '1', '-i', '/dev/video'+cameraNumber, 'app/temp/'+imageName+'_'+uniqueId+'.jpg']);
           children.push(child);
           child.stdout.on('data', function (data) {
             console.log('stdout: ' + data);
@@ -244,11 +253,20 @@ webSocket.sockets.on('connection', function (client) {
       var imageName = data.message.split("K:K")[1];
       var cameraNumber = data.message.split("K:K")[0];
 
-      var child2 = spawn("rm", ['-Rf','app/'+imageName+'.mpg']);
+      var child2 = spawn("rm", ['-Rf','app/'+imageName+outputExtension]);
       children.push(child2);
       child2.on('close', function (code) {
         console.log('deletedfile');
-        var child = spawn("ffmpeg", ['-f','avfoundation','-i',''+cameraNumber+'','app/'+imageName+'.mpg']);
+        var ffmpegArr = ffmpeg.split(" ");
+        ffmpegArr.shift();
+        for ( k = 0; k < ffmpegArr.length; k++ ){
+          if(ffmpegArr[k] == "[CAMERANO]"){
+            ffmpegArr[k] = cameraNumber;
+          } else if(ffmpegArr[k] == "[OUTPUT]"){
+            ffmpegArr[k] = 'app/'+imageName+outputExtension;
+          }
+        }
+        var child = spawn("ffmpeg", ffmpegArr);
         children.push(child);
         child.stdout.on('data', function (data) {
           console.log('stdout: ' + data);
@@ -286,7 +304,7 @@ webSocket.sockets.on('connection', function (client) {
 
         for (var i=dlArray.length-1; i>=0; i--) {
           // console.log("What we got: "+sendArray[i]+"\r");
-            if (!dlArray[i].match(".mpg") && !dlArray[i].match(".webm")) {
+            if (!dlArray[i].match(outputExtension) && !dlArray[i].match(".webm")) {
                 dlArray.splice(i, 1);
                 // break;       //<-- Uncomment  if only the first term has to be removed
             } else {
@@ -305,7 +323,7 @@ webSocket.sockets.on('connection', function (client) {
         child3.on('close', function (code) {
         for (var i=sendArray.length-1; i>=0; i--) {
           // console.log("What we got: "+sendArray[i]+"\r");
-            if (!sendArray[i].match(".mpg") && !sendArray[i].match(".webm")) {
+            if (!sendArray[i].match(outputExtension) && !sendArray[i].match(".webm")) {
                 sendArray.splice(i, 1);
                 // break;       //<-- Uncomment  if only the first term has to be removed
             }
@@ -348,7 +366,7 @@ webSocket.sockets.on('connection', function (client) {
         clients.push(mg.split('cl:')[1])
       }
       console.log("WE GOT A VIDEO");
-      var msg = data.message+'.mpg';
+      var msg = data.message+outputExtension;
       var child = spawn("ffmpeg", ['-i','app/'+msg+'','-s','640x480','app/'+data.message+'.webm']);
       child.stdout.on('data', function (data) {
         console.log('trying webm convert');

@@ -60,13 +60,15 @@ transform: scale(1, 1) !important;
 		</video>
 		</div>
 		<br/><Br/>
-		        <button id="speed">+1</button>
-		        <button id="negative">-1</button>
+		        <button id="speed">Next frame</button>
+		        <button id="negative">Previous frame</button>
 		        <button id="blink">Blink</button>
 		        <button id="notblink">Not Blink</button>
+		        <button id="export">Export</button>
 		        <br/>
 		<div id="an" style="word-wrap: break-word;"></div>
 
+		<div id="blink-data" style="display: none;"></div>
 
 		<script>
 		var vid = $('#v0')[0];
@@ -95,7 +97,7 @@ transform: scale(1, 1) !important;
 		var num = Math.round(vid.duration*fps);
 		var annotation = new Array(num);
 
-		for (var i = 0; i < num; i++) annotation[i] = "No blink detected";
+		for (var i = 0; i < num; i++) annotation[i] = 0;
 
 		window.theInterval;   
 		vid.onplay = vid.onclick = function() {
@@ -115,8 +117,35 @@ transform: scale(1, 1) !important;
 		    setInterval(function() {
 		        $('#time').html(Math.round(vid.currentTime * fps));
 		        $("#video_overlays").html(annotation[(Math.round(vid.currentTime * fps) / fps)*fps]);
+		        var passage ="Frame no and Blink -- 1 is blink, 0 is no blink";
+		        for (var i = 0; i < num; i++){
+		        	var seconds = i/fps;
+		        	var minutes = seconds/60;
+		        	var hours = minutes/60;
+		        	seconds = seconds % 60;
+		        	minutes = Math.floor(minutes % 60);
+		        	hours = Math.floor(hours % 24);
+		        	passage+= "Frame "+i+": "+annotation[i]+" at "+hours+":"+minutes+":"+seconds+"\n";
+
+		        }
+		        $("#blink-data").html(passage);
 		    }, 100);
 		};
+
+		function downloadInnerHtml(filename, elId, mimeType) {
+		    var elHtml = document.getElementById('blink-data').innerHTML;
+		    var link = document.createElement('a');
+		    mimeType = mimeType || 'text/plain';
+
+		    link.setAttribute('download', filename);
+		    link.setAttribute('href', 'data:' + mimeType + ';charset=utf-8,' + encodeURIComponent(elHtml));
+		    link.click(); 
+		}
+
+		$("#export").click(function(){
+			var fileName = url.split("video=")[1]+".txt";
+			downloadInnerHtml(fileName, 'main','text/plain');
+		})
 
 		vid.onmouseup = function(){
 			clearInterval(window.theInterval);
@@ -134,12 +163,12 @@ transform: scale(1, 1) !important;
 		});
 
 		$("#blink").click(function(){ 
-		    annotation[(Math.round(vid.currentTime * fps) / fps)*fps] = "Blink detected!";
+		    annotation[(Math.round(vid.currentTime * fps) / fps)*fps] = 1;
 		    $("#video_overlays").html("Blink detected");
 		    clearInterval(window.theInterval);
 		});
 		$("#notblink").click(function(){ 
-		    annotation[(Math.round(vid.currentTime * fps) / fps)*fps] = "No blink detected";
+		    annotation[(Math.round(vid.currentTime * fps) / fps)*fps] = 0;
 		    $("#video_overlays").html("No blink detected");
 		    clearInterval(window.theInterval);
 		});
