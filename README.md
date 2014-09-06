@@ -44,7 +44,11 @@ You can use the dashboard (Open localhost:8080/#dashboard in the invigilator com
 
 In case the algorithm fails, and you want to do manual anotation, that is built as well. First -- open a new terminal window and run "python -m SimpleHTTPServer 8000". You might need to install python, just follow the on-screen instructions. Minimize that. For simplicity I recommend running that as a bash command from Christian's algorithm.
 
-Now, you can access the annotation software from http://localhost:8080/annotate.html#video=[URL], where URL is the local URL of the video. You can test it out here: http://localhost:8080/annotate.html#video=http://media.w3.org/2010/05/sintel/trailer.webm#video=http://html5demos.com/assets/dizzy.mp4
+Now, you can access the annotation software from http://localhost:8080/annotate.html#video=[URL], where URL is the local URL of the video. You can access the videos in the "unprocessed_vids" folder like this: http://localhost:8000/annotate.html#video=http://localhost:8000/app/unprocessed_vids/blue_camera1.webm. Easy!
+
+NOTE: The video URL will be accessible on port 8000 rather than port 8080.
+
+You can test it out here: http://localhost:8080/annotate.html#video=http://media.w3.org/2010/05/sintel/trailer.webm#video=http://html5demos.com/assets/dizzy.mp4
 
 You can add multiple videos by appending #video=VIDEORUL to it. In order for it to work correctly, you should run it in MOZILLA FIREFOX. Note: Due to Firefox's bandwidth issues, you might need to let the video buffer occasionally.
 
