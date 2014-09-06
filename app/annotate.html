@@ -52,11 +52,11 @@ transform: scale(1, 1) !important;
 		
 		<div id="video_box">
 		<div id="video_overlays">No blink detected</div>
-		<video id="v0" controls tabindex="0" autobuffer preload style="">
+		<!-- <video id="v0" controls tabindex="0" autobuffer preload style=""> -->
 <!-- 		    <source type="video/webm; codecs=&quot;vp8, vorbis&quot;" src="lab0.webm"></source>
 		    <source type="video/ogg; codecs=&quot;theora, vorbis&quot;" src="http://www.html5rocks.com/tutorials/video/basics/Chrome_ImF.ogv"></source>
 		    <source type="video/mp4; codecs=&quot;avc1.42E01E, mp4a.40.2&quot;" src="http://www.html5rocks.com/tutorials/video/basics/Chrome_ImF.mp4"></source> -->
-		    <p>Sorry, your browser does not support the &lt;video&gt; element.</p>
+<!-- 		    <p>Sorry, your browser does not support the &lt;video&gt; element.</p> -->
 		</video>
 		</div>
 		<br/><Br/>
@@ -71,36 +71,80 @@ transform: scale(1, 1) !important;
 		<div id="blink-data" style="display: none;"></div>
 
 		<script>
-		var vid = $('#v0')[0];
+		window.vid = [];
 
 		var readyUp = window.setInterval(function(t){
-		  if (vid.readyState > 0) {
-		    doEverything();
-		  }
+		// console.log(vid[1]);
+			var vv = $('video');
+			var isDoneAll = 0;
+			$.each(vid, function( index, value ) {
+			  console.log(value);
+			  if (value.readyState > 0) {
+			    isDoneAll = 1;
+			  }
+			});
+			doEverything();
 		},500);
 
 		var url = window.location.href;
 
-		if(url.split("video=")[1]){
-			$(vid).hide();
-			var video = document.createElement('video');
-			video.src = url.split("video=")[1];
-			$(video).attr("controls","").attr("width","640");
-			$("#video_box").append(video);
-			vid = video;
+		if(url.split("video=")){
+			// $(vid).hide();
+			var vab = url.split("#video=");
+			vab.shift();
+			console.log("What we got: "+vab);
+			$.each(vab, function(index, value){
+				var video = document.createElement('video');
+				video.src = value;
+				console.log("Now trying..."+value);
+				$(video).attr("preload","auto").attr("controls","").attr("width","400").attr("padding-left","15%");
+				$("#video_box").append(video);
+				window.vid.push(video);
+			});
+			readyUp();	
 		}
 
 
 		function doEverything(){
+
+		$.each($("video"), function( index, value ) {
+			$("video")[index].play();
+			$("video")[index].pause();
+			$("video")[index].currentTime = 0;
+		});
+
 		clearInterval(readyUp);
 		var fps = 25;
-		var num = Math.round(vid.duration*fps);
+		var vid1 = $('video');
+		var duration = 0;
+		$.each(vid, function( index, value ) {
+		  var dd = value.duration;
+		  if(dd > duration)
+		  	duration = dd;
+		});
+		console.log(duration);
+		var num = Math.round(duration*fps);
 		var annotation = new Array(num);
+
+		window.theVideo = $("video")[0];
 
 		for (var i = 0; i < num; i++) annotation[i] = 0;
 
 		window.theInterval;   
-		vid.onplay = vid.onclick = function() {
+		$.each($("video"), function( index, value ) {
+			$("video")[index].onplay = function(){ runVideoShizzam($("video")[index]); }
+			$("video")[index].click = function(){ runVideoShizzam(); }
+		});
+
+
+		$("video").on('pause', function() {
+			clearInterval(window.secondInterval);
+			$.each($("video"), function( index, value ) {
+				$("video")[index].pause();
+			});
+		});
+		function runVideoShizzam(e) {
+
 		    // vid.onplay = vid.onclick = null;
 
 
@@ -114,9 +158,17 @@ transform: scale(1, 1) !important;
 		    //     }, 2000);
 		    // }, 12000);
 		    
-		    setInterval(function() {
-		        $('#time').html(Math.round(vid.currentTime * fps));
-		        $("#video_overlays").html(annotation[(Math.round(vid.currentTime * fps) / fps)*fps]);
+		    window.secondInterval = setInterval(function() {
+				$.each($("video"), function( index, value ) {
+					if($("video")[index].src != e.src){
+						$("video")[index].currentTime = e.currentTime;
+						console.log("hi");
+						console.log($("video")[index].src);
+						console.log(e.src);
+					}
+				});
+		        $('#time').html(Math.round(e.currentTime * fps));
+		        $("#video_overlays").html(annotation[(Math.round(e.currentTime * fps) / fps)*fps]);
 		        var passage ="Frame no and Blink -- 1 is blink, 0 is no blink";
 		        for (var i = 0; i < num; i++){
 		        	var seconds = i/fps;
@@ -144,6 +196,7 @@ transform: scale(1, 1) !important;
 
 		$("#export").click(function(){
 			var fileName = url.split("video=")[1]+".txt";
+			console.log("clicked export");
 			downloadInnerHtml(fileName, 'main','text/plain');
 		})
 
@@ -152,23 +205,27 @@ transform: scale(1, 1) !important;
 		}
 
 		$("#speed").click(function() { // button function for 3x fast speed forward
-		    vid.pause();
-		    vid.currentTime += (1 / fps);
+		    theVideo.pause();
+		    console.log("clicked speed");
+		    theVideo.currentTime += (1 / fps);
 		    clearInterval(window.theInterval);
 		});
 		$("#negative").click(function() { // button function for rewind
-		    vid.pause();
-		    vid.currentTime -= (1 / fps);
+		    theVideo.pause();
+		    console.log("clicked neg");
+		    theVideo.currentTime -= (1 / fps);
 		    clearInterval(window.theInterval);
 		});
 
 		$("#blink").click(function(){ 
-		    annotation[(Math.round(vid.currentTime * fps) / fps)*fps] = 1;
+		    annotation[(Math.round(theVideo.currentTime * fps) / fps)*fps] = 1;
+		    console.log("clicked blink");
 		    $("#video_overlays").html("Blink detected");
 		    clearInterval(window.theInterval);
 		});
 		$("#notblink").click(function(){ 
-		    annotation[(Math.round(vid.currentTime * fps) / fps)*fps] = 0;
+			console.log("noblink");
+		    annotation[(Math.round(theVideo.currentTime * fps) / fps)*fps] = 0;
 		    $("#video_overlays").html("No blink detected");
 		    clearInterval(window.theInterval);
 		});
