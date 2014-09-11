@@ -18,7 +18,7 @@ define([
       
       $(this.el).css("background-color","#FBFBFB").css("box-shadow","inset 0 0 0 rgba(0,0,0,.5)").css("color","#333333").css("text-shadow","0 0 0 rgba(0,0,0,.5)");
       $(this.el).html(dashboardTemplate);
-      console.log("Howdy ho senor");
+      
       window.socket = io.connect();
       window.socket.emit('dashboard', {message:'start'});
       window.arr = [];

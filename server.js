@@ -1,3 +1,53 @@
+/*
+
+==================================
+General information about the code
+==================================
+
+Server.js is the file that handles all the server communications. Bash commands
+(control "f" 'spawn' to see the various bash commands) are handled here,
+and all the socket input output is done here. 
+
+EVERYTHING is done through sockets. Video screenshots are taken client-side, 
+and then sent to the invigilator using sockets. The socket's are SENT in the individual
+"view" (/app/views/).
+
+
+Labeling is a bit funky. "Guestbook" is the name for all the views/models associated
+with the tester. "Dashboard" is the name of all the views/models associated with
+the dashboard. In other words, views/guestbook/GuestbookFormView.js is the view that
+handles all the tester stuff. It has literally everything.
+
+TL;DR: All the code that comprises this application is over the following 4 files:
+
+- Server.js
+- app/js/views/MainView.js
+- app/js/guestbook/GuestbookFormView.js
+- app/js/dashboard/DashboardView.js
+
+Mostly the first 3.
+
+The rest of it is occasionally referenced, but you largely don't have to worry about it.
+
+The workflow is as follows:
+
+
+MainView is the main invigilator application. It handles most of the stuff on the 
+invigilator page, and redirects you if you click "tester". DashboardView has some
+invigilator stuff, but mostly just a simple post-processing.
+
+GuestbookFormView handles most of the video-related stuff. Turning on, turning off,
+posting, saving, etc. is primarily handled on GuestbookFormView, although some of it
+is handled in the MainView as well (depending on what scope is needed).
+
+Server.js is what connects the two. It takes triggers from MainView (see the sockets).
+And then it sends a "on" or "off" command (or whatever) to GuestbookFormView. Additionally,
+when GuestbookFormView sends a photo/video, the Server.js file takes it, and sends
+it back to the invigilator on MainView.js.
+
+
+*/
+
 
 //Variables you can change
 
@@ -44,6 +94,9 @@ var mongodbPort = 8888;
 */
 
 //////////////////////////////////////////////////////// HTTP - sends html/js/css to the browswer 
+
+
+//This stuff here is just showing how the server serves the HTML content.
 
 var sendHTML = function( filePath, contentType, response ){
 
@@ -138,38 +191,30 @@ var onHtmlRequestHandler = function(request, response) {
 
 var server = httpServer.createServer(onHtmlRequestHandler).listen(httpPort); 
 
-//Setting up socket shenanigans
+//Setting up all the socket information
 
 var webSocket = io.listen(server);
 var clients = [];
 var sockets = [];
 var children = [];
-console.log("here we are");
 
 
-
-
-
-// child = exec("xmessage hi", function (error, stdout, stderr) {
-//   sys.print('stdout: ' + stdout);
-//   sys.print('stderr: ' + stderr);
-//   console.log("HALLO?");
-//   if (error !== null) {
-//     console.log('exec error: ' + error);
-//   }
-// });
+//Start the sockets! 'Connection' socket triggers when the page is loaded by someone.
 
 webSocket.sockets.on('connection', function (client) {
-    console.log("Wee got a connection..");
+
+    //Send the extension variable to the client so it knows what to use
     webSocket.sockets.emit('ext', {message: outputExtension});
-    // console.log(client.id);
-    
-    // this works great:    
-    // plain message - this never works :(
+
+
+    //Message is a catch-all socket. I send a lot of stuff through this.
     client.on('message', function(data){
       var mg = data.message;
-      // console.log("GOT SOMETHING");
-      // console.log(mg);
+
+      //I send a client ID with "cl:" -- so if the message contains "cl:"
+      //I know it has a client ID. I use unique client ID's to
+      //Calculate the number of clients.
+
       if(mg.indexOf('cl:') != -1){
         if(mg.split('cl:')[0] == 'global'){
           clients.unshift(mg.split('cl:')[1])
@@ -178,24 +223,33 @@ webSocket.sockets.on('connection', function (client) {
           clients.push(mg.split('cl:')[1])
           sockets.push(client);
         }
+        //Emit how many clients are currently signed on
         webSocket.sockets.emit('num', {message: clients});
       }
+
+      //Don't worry about this
       var msg = clients[0]+'x:x'+data.message;
-      // console.log("The message is"+msg);
       if(mg.indexOf('cl:') != -1)
         client.emit('message', {message: msg});
 
+
+      //So here we get the PREVIEW IMAGE (every few seconds) from a running feed.
       var imageName = msg.split('x:x')[1].split("K:K")[1];
       var cameraNumber = msg.split('x:x')[1].split("K:K")[0];
       var uniqueId = new Date().getTime();
+
+      //Spawn/child runs Bash Scripts. First, delete any cached preview images.
       var child2 = spawn("rm", ['-Rf','app/temp']);
       children.push(child2);
       child2.on('close', function (code) {
-        console.log('deletedfile');
+
+        //Make a temp folder to store the preview images.
         var child3 = spawn("mkdir", ['app/temp/']);
         child3.on('close', function (code) {
           console.log('created folder');
           var child;
+          //Change bash script depending on the OS. Run ffmpeg and get 1 frame
+          //vframes 1 gets 1 frame, which is basically a single image
           if(os == "osx")
             var child = spawn("ffmpeg", ['-f','avfoundation','-i',''+cameraNumber+'','-vframes','1','app/temp/'+imageName+'_'+uniqueId+'.jpg']);
           else
@@ -206,10 +260,12 @@ webSocket.sockets.on('connection', function (client) {
           });
           child.on('close', function (code) {
             console.log('child process exited with code ' + code);
+            //As long as we have a valid image, send it to the invigilator 
             if(typeof imageName != 'undefined'){
               var msg = clients[0]+'x:x'+imageName+"_"+uniqueId+'.jpgK:K'+imageName;
               client.broadcast.emit('message', {message: msg});
               child.kill();
+              //Kill child processes for memory's sakes
             }
           });
           child.stderr.on('data', function (data) {
@@ -219,35 +275,9 @@ webSocket.sockets.on('connection', function (client) {
 
 
       });
-      console.log(imageName);
-      // var child2 = spawn("rm", ['-Rf',imageName+'.jpg']);
-      // child2.on('close', function (code) {
-      //   console.log('deletedfile');
-      //   var child = spawn("ffmpeg", ['-f','avfoundation','-i','0','-vframes','1','outie1.jpg']);
-      //   child.stdout.on('data', function (data) {
-      //     console.log('stdout: ' + data);
-      //     child.kill();
-      //   });
-      //   child.on('close', function (code) {
-      //     child.stdin.pause();
-      //     child.kill();
-      //     console.log('child process exited with code ' + code);
-      //     var msg = clients[0]+'x:x'+imageName+'.jpgK:K'+imageName;
-      //     client.broadcast.emit('message', {message: msg});
-      //   });
-      //   child.stderr.on('data', function (data) {
-      //     console.log('stderr: ' + data);
-      //     child.stdin.pause();
-      //     child.kill();
-      //   });
-      //   child2.stdin.pause();
-      //   child2.kill();
-      // });
-
-
-
     });
   
+    //If we get a "start camera" command from the invigilator
     client.on('start_camera', function(data) {
       console.log("START CAMERA TRIGGERED");
       var imageName = data.message.split("K:K")[1];
@@ -257,6 +287,9 @@ webSocket.sockets.on('connection', function (client) {
       children.push(child2);
       child2.on('close', function (code) {
         console.log('deletedfile');
+
+        //This stuff here uses the ffmpegArr global variable to create the command
+
         var ffmpegArr = ffmpeg.split(" ");
         ffmpegArr.shift();
         for ( k = 0; k < ffmpegArr.length; k++ ){
@@ -266,6 +299,8 @@ webSocket.sockets.on('connection', function (client) {
             ffmpegArr[k] = 'app/'+imageName+outputExtension;
           }
         }
+
+        //Now we run a child process (bash command) using the ffmpegArr
         var child = spawn("ffmpeg", ffmpegArr);
         children.push(child);
         child.stdout.on('data', function (data) {
@@ -280,33 +315,28 @@ webSocket.sockets.on('connection', function (client) {
       });
     })
 
-    client.on('annotate', function(data){
-
-    });
-
+    //After the videos are all downloaded, we need to pull them
+    //From the downloads folder, and move them to the unprocessed_vids folder
+    //That's all that this entire function is doing... it's moving all the
+    //.webm and .outputExtension files from the downloads folder to the
+    //Unprocessed vids folder... which you can see in the #dashboard view
     client.on('dashboard', function(data){
-      console.log(data.message);
       client.emit('localpath', {message: localFilePath});
       var child = spawn("ls", [downloadPath]);
       children.push(child);
       var sendArray = [];
       var dlArray = [];
       child.stdout.on('data', function (data) {
-        // console.log('stdout: ' + data.toString().split("\n"));
         var newArray = data.toString().split("\n");
         for(var y = 0; y < newArray.length; y++){
           dlArray.push(newArray[y]);
         } 
-        // console.log(sendArray);
-        // 
       });
       child.on('close', function (code) {
 
         for (var i=dlArray.length-1; i>=0; i--) {
-          // console.log("What we got: "+sendArray[i]+"\r");
             if (!dlArray[i].match(outputExtension) && !dlArray[i].match(".webm")) {
                 dlArray.splice(i, 1);
-                // break;       //<-- Uncomment  if only the first term has to be removed
             } else {
               sendArray.push(dlArray[i]);
             }
@@ -322,10 +352,8 @@ webSocket.sockets.on('connection', function (client) {
         });
         child3.on('close', function (code) {
         for (var i=sendArray.length-1; i>=0; i--) {
-          // console.log("What we got: "+sendArray[i]+"\r");
             if (!sendArray[i].match(outputExtension) && !sendArray[i].match(".webm")) {
                 sendArray.splice(i, 1);
-                // break;       //<-- Uncomment  if only the first term has to be removed
             }
         }
         console.log('child process dashboard exited with code ' + code);
@@ -354,19 +382,24 @@ webSocket.sockets.on('connection', function (client) {
       });
     })
 
+    //Get a 'stop camera' command
     client.on('stop_cam', function(data) {
       console.log('killing', children.length, 'child processes');
       children.forEach(function(child) {
         child.kill();
       });
     })
+
+    //Transferring video from tester to invigilator
     client.on('vid', function(data) {
       var mg = data.message;
       if(mg.indexOf('cl:') == 0){
         clients.push(mg.split('cl:')[1])
       }
-      console.log("WE GOT A VIDEO");
+
       var msg = data.message+outputExtension;
+      //We convert the video (app/msg/) into a .webm video, because annotate.html
+      //Accepts .webm videos
       var child = spawn("ffmpeg", ['-i','app/'+msg+'','-s','640x480','app/'+data.message+'.webm']);
       child.stdout.on('data', function (data) {
         console.log('trying webm convert');
@@ -382,6 +415,7 @@ webSocket.sockets.on('connection', function (client) {
       
     })
 
+    //Random function don't worry about this
     client.on('dl', function(data) {
       var mg = data.message;
       var nm = mg.split(".webm")[0]+".mp4";
@@ -413,6 +447,7 @@ webSocket.sockets.on('connection', function (client) {
       });
     })
 
+    //Sending thumbnails
     client.on('pic', function(data) {
       var mg = data.message;
       if(mg.indexOf('cl:') == 0){
@@ -437,6 +472,9 @@ webSocket.sockets.on('connection', function (client) {
 });
 
 ////////////////////////////////////////////////////// MONGODB - saves data in the database and posts data to the browser
+
+
+//DON'T WORRY ABOUT ANYTHING BEYOND THIS POINT. IRRELEVANT.
 
 var mongoURI = ( process.env.PORT ) ? config.creds.mongoose_auth_jitsu : config.creds.mongoose_auth_local;
 
