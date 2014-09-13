@@ -26,6 +26,7 @@ define([
       'click .post-message': 'postMessage',
     },
 
+    //These are all the functions that run when the view is rendered
     render: function () {
       window.this = this;
 
