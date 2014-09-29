@@ -151,7 +151,7 @@ define([
 
       MediaStreamTrack.getSources(function (media_sources) {
           var counter = 0;
-          window.cameraCounter = 1;
+          window.cameraCounter = 0;
           for (var i = 0; i < media_sources.length; i++) {
               var media_source = media_sources[i];
               var constraints = {};
@@ -167,7 +167,8 @@ define([
 
               // if video device
               //Figure out how many cameras there are
-              if (media_source.kind == 'video') {
+              // Hard limit of two webcams for Mac Mini
+              if (media_source.kind == 'video' && window.cameraCounter < 2) {
                 window.cameraCounter++;
               }
 
