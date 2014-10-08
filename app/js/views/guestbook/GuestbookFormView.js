@@ -24,6 +24,7 @@ define([
       'click #start-test' : 'turnOnTrigger',
       'click #stop-me' : 'stopTrigger',
       'click .post-message': 'postMessage',
+      'click #test-type' : 'toggleTestType',
     },
 
     //These are all the functions that run when the view is rendered
@@ -33,11 +34,24 @@ define([
       //When you get a 'trigger' message, do stuff with it
       window.socket.on('trigger', function(data){
         var msg = data.message.split('cl:')[0];
+        console.log("Trigger message")
+        console.log(msg);
         var target_Client = data.message.split('cl:')[1];
+        var test = data.test     
+        if (test == 'desktop') {
+          window.relevantCameras = [0]  
+        }
+        else {
+          window.relevantCameras = [1]
+        } 
+
         console.log("We got a start request");
+        console.log(data);
         console.log(data.message);
+        console.log(test);
         console.log(target_Client);
         console.log(window.globalSession);
+        
         if(msg.match('stop')){
           //If you get a 'stop 'message...
           var name = msg.split("stop")[1];
@@ -102,12 +116,30 @@ define([
       $(this.el).html(guestbookFormTemplate);
       return this; //Run the template
     },
+
+    toggleTestType: function() {
+      button = $('#test-type')[0]
+      if (button.value == 'desktop') {
+        console.log("I ran toggleTestType to tablet");
+        button.value = 'tablet';
+        $('#test-type').text("Tablet");
+      } else {
+        console.log("I ran toggleTestType to desktop");
+        button.value ='desktop';
+        $('#test-type').text("Desktop");
+      }
+    },
+
     //This is the function to turn on a camera
     turnOnTrigger: function(e) {
       window.targetClient = prompt("Input tester name ("+window.client_list+")","");
       //Send the 'turn on' trigger via sockets
-      window.socket.emit('trigger', {message:'oncl:'+window.targetClient});
-      window.runningClients.push(window.targetClient);
+      var data = {message:'oncl:'+window.targetClient, test: $('#test-type')[0].value}
+      console.log(data)
+      window.socket.emit('trigger', data);
+      window.runningClients.push(window.targetClient)
+
+
       $(e.target).prop('disabled', false);
       $('#stop-me').prop('disabled', false);
       $($('video')[0]).hide();
@@ -118,7 +150,7 @@ define([
     stopTrigger: function(e) {
       var name = prompt("Input tester name ("+window.runningClients+")","");
       window.runningClients.remove(name);
-      window.socket.emit('trigger', {message:'stop'+name});
+      window.socket.emit('trigger', {message:'stop'+name, test: $('#test-type')[0].value});
     },
     toggleActivateRecordButton: function() {
         // var b = $('#record-me');
@@ -126,7 +158,6 @@ define([
     },
     //This is what happens when the camera is turned on
     turnOnCamera: function() {
-      
       // $('#record-me').prop('disabled', false);
       // $('video').hide();
       //window.video.controls = false;
@@ -141,7 +172,7 @@ define([
           // awful 100ms+ as 640x480.
           window.canvas.width = video.width;
           window.canvas.height = video.height;
-          window.this.record();
+          window.this.record(window.relevantCameras);
           console.log("Now triggering record...");
         }, 1000);
       };
@@ -178,15 +209,16 @@ define([
       });
     },
 
-    record: function() {
+    record: function(relevantCameras) {
       var elapsedTime = $('#elasped-time');
       var ctx = [window.canvas[0].getContext('2d'),window.canvas[1].getContext('2d'),window.canvas[2].getContext('2d'),window.canvas[3].getContext('2d')];
       window.canvas_HEIGHT = window.canvas.height;
       window.canvas_WIDTH = window.canvas.width;
 
-      for(x = 0; x < window.cameraCounter; x++ ){
-        var clientName = window.globalSession.split("cl:")[1]+"_"+x;
-        window.socket.emit('start_camera', {message:x+"K:K"+clientName});
+      for(x = 0; x < relevantCameras.length; x++ ){
+        var clientName = window.globalSession.split("cl:")[1]+"_"+relevantCameras[x];
+        console.log("Client Name: " + clientName)
+        window.socket.emit('start_camera', {message:relevantCameras[x]+"K:K"+clientName});
       }
 
       window.fmz = [[],[],[],[]]; // clear existing frames;
@@ -196,10 +228,10 @@ define([
       $('#stop-me').prop('disabled', false);
 
       function drawVideoFrame_() {
-        for(x = 0; x < window.cameraCounter; x++ ){      
-          var clientName = window.globalSession.split("cl:")[1]+"_"+x;
-          console.log("NOW EMITING:"+x+"K:K"+clientName);
-          window.socket.emit('message', {message:x+"K:K"+clientName});
+        for(x = 0; x < relevantCameras.length; x++ ){      
+          var clientName = window.globalSession.split("cl:")[1]+"_"+relevantCameras[x];
+          console.log("NOW EMITING:"+relevantCameras[x]+"K:K"+clientName);
+          window.socket.emit('message', {message:relevantCameras[x]+"K:K"+clientName});
         }
       };
 
@@ -224,8 +256,8 @@ define([
     //Send the final 'vid' socket upon ending recording teh video
     embedVideoPreview: function(opt_url) {
       console.log("Now sending....");
-      for(x = 0; x < window.cameraCounter; x++ ){
-        window.socket.emit('vid', {message:window.globalSession.split("cl:")[1]+"_"+x});
+      for(x = 0; x < window.relevantCameras.length; x++ ){
+        window.socket.emit('vid', {message:window.globalSession.split("cl:")[1]+"_"+relevantCameras[x]});
       }
     },
     

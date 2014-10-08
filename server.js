@@ -282,6 +282,7 @@ webSocket.sockets.on('connection', function (client) {
       console.log("START CAMERA TRIGGERED");
       var imageName = data.message.split("K:K")[1];
       var cameraNumber = data.message.split("K:K")[0];
+      console.log("CAMERA NUMBER RECIEVED " + cameraNumber)
 
       var child2 = spawn("rm", ['-Rf','app/'+imageName+outputExtension]);
       children.push(child2);
@@ -407,6 +408,7 @@ webSocket.sockets.on('connection', function (client) {
       child.on('close', function (code) {
         console.log('finished webm convert');
         client.broadcast.emit('vid', {message: msg});
+        client.broadcast.emit('remove_display', {message: msg});
       });
       child.stderr.on('data', function (data) {
         console.log('issue with webm convert: ' + data.toString().split("time=")[1]);
@@ -459,7 +461,7 @@ webSocket.sockets.on('connection', function (client) {
     })
 
     client.on('trigger', function(data) {
-      client.broadcast.emit('trigger', {message: data.message});
+      client.broadcast.emit('trigger', {message: data.message, test: data.test});
     })
       
     client.on('disconnect', function() {

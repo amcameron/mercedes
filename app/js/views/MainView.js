@@ -70,7 +70,11 @@ define([
     window.socket.on('message', function(data){
       var master_Client = data.message.split('x:x')[0];
       var thumbnail = data.message.split('x:x')[1].split("K:K")[0];
+      console.log("thumbnail");
+      console.log(thumbnail);
       var theName = data.message.split('x:x')[1].split("K:K")[1];
+      console.log("theName");
+      console.log(theName)
 
       //This takes in preview images from the 'message' socket and embeds it onto the page
       if(window.globalSession.split('cl:')[1] == master_Client){
@@ -140,6 +144,7 @@ define([
         a.download = data.message.split(".")[0].split("_")[0]+"_"+$("#lightbox-"+data.message.split(".")[0]+" label").html()+".webm";
         a2.download = data.message.split(".")[0].split("_")[0]+"_"+$("#lightbox-"+data.message.split(".")[0]+" label").html()+window.ext;
       }
+
       a.href = data.message.split(".")[0]+".webm";
       a2.href = data.message.split(".")[0]+window.ext;
       $(a).html("here");
@@ -159,6 +164,14 @@ define([
           $("#videos").show();
         }
       }
+    });
+
+    window.socket.on('remove_display', function(data){
+
+      // Remove the Lightbox
+      console.log("removing" + data.message.split(".")[0]);
+      $("#lightbox-"+data.message.split(".")[0]).remove();
+
     });
 
     //Legacy stuff, disregard
