@@ -38,13 +38,7 @@ define([
         console.log(msg);
         var target_Client = data.message.split('cl:')[1];
         var test = data.test     
-        if (test == 'desktop') {
-          window.relevantCameras = [0]  
-        }
-        else {
-          window.relevantCameras = [1]
-        } 
-
+        
         console.log("We got a start request");
         console.log(data);
         console.log(data.message);
@@ -58,6 +52,17 @@ define([
           if(window.globalSession.split('cl:')[1] == name)
             window.this.stopCamera();
         }
+
+        if(msg=='on'){
+          if (test == 'desktop') {
+            window.relevantCameras = [0,2];  
+          }
+          else {
+            window.relevantCameras = [1,3];
+          }
+        } 
+
+
         if (target_Client != 'undefined'){
           //If you get a 'start' message
           if (window.globalSession.split('cl:')[1] == target_Client){
