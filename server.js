@@ -57,8 +57,7 @@ var chromeAlias ='/Applications/Google\ Chrome.app'; //Whatever the alias or loc
 var os = "osx"; //The OS on this system -- do either "osx" or "ubuntu"
 var outputExtension = ".mpg" //What extension/encoding type do you want to output
 //Your ffmpeg script (see README). use [CAMERANO] to denote where the camera number is, and [OUTPUT] -- make the rest whatever settings you want
-var ffmpeg = "ffmpeg -f avfoundation -i [CAMERANO] [OUTPUT]"; 
-
+var ffmpeg = "ffmpeg -f avfoundation -i [CAMERANO] -r 30 [OUTPUT]";
 //DONT TOUCH ANYTHING ELSE UNLESS YOU KNOW WHAT YOU'RE DOING
 
 //http server
