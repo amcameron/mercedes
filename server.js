@@ -210,6 +210,7 @@ webSocket.sockets.on('connection', function (client) {
     client.on('message', function(data){
       var mg = data.message;
 
+
       //I send a client ID with "cl:" -- so if the message contains "cl:"
       //I know it has a client ID. I use unique client ID's to
       //Calculate the number of clients.
@@ -283,7 +284,7 @@ webSocket.sockets.on('connection', function (client) {
       var cameraNumber = data.message.split("K:K")[0];
       console.log("CAMERA NUMBER RECIEVED " + cameraNumber)
 
-      var child2 = spawn("rm", ['-Rf','app/'+imageName+outputExtension]);
+      var child2 = spawn("rm", ['-Rf','app/videos'+imageName+outputExtension]);
       children.push(child2);
       child2.on('close', function (code) {
         console.log('deletedfile');
@@ -296,7 +297,7 @@ webSocket.sockets.on('connection', function (client) {
           if(ffmpegArr[k] == "[CAMERANO]"){
             ffmpegArr[k] = cameraNumber;
           } else if(ffmpegArr[k] == "[OUTPUT]"){
-            ffmpegArr[k] = 'app/'+imageName+outputExtension;
+            ffmpegArr[k] = 'app/videos'+imageName+outputExtension;
           }
         }
 
@@ -393,25 +394,27 @@ webSocket.sockets.on('connection', function (client) {
     //Transferring video from tester to invigilator
     client.on('vid', function(data) {
       var mg = data.message;
+      var task = data.taskNum
       if(mg.indexOf('cl:') == 0){
         clients.push(mg.split('cl:')[1])
       }
-
+      var msg_t = data.message+'_'+task+outputExtension;
       var msg = data.message+outputExtension;
       //We convert the video (app/msg/) into a .webm video, because annotate.html
       //Accepts .webm videos
-      var child = spawn("ffmpeg", ['-i','app/'+msg+'','-s','640x480','app/'+data.message+'.webm']);
+      spawn("ffmpeg", ['-i','app/'+msg+'','-s','640x480','app/'+data.message+'_'+task+'.webm']);
+       var child = spawn("ffmpeg", ['-i','app/videos'+msg+'','-s','1920x1080','app/'+msg_t]);
       child.stdout.on('data', function (data) {
         console.log('trying webm convert');
       });
       child.on('close', function (code) {
         console.log('finished webm convert');
-        client.broadcast.emit('vid', {message: msg});
+        client.broadcast.emit('vid', {message: msg,taskNum:task});
         client.broadcast.emit('remove_display', {message: msg});
       });
       child.stderr.on('data', function (data) {
         console.log('issue with webm convert: ' + data.toString().split("time=")[1]);
-        client.broadcast.emit('progress', {message: mg+"Q:Q"+data.toString().split("time=")[1]});
+        client.broadcast.emit('progress', {message: mg+"Q:Q"+data.toString().split("time=")[1],taskNum: task});
       });
       
     })
@@ -460,7 +463,7 @@ webSocket.sockets.on('connection', function (client) {
     })
 
     client.on('trigger', function(data) {
-      client.broadcast.emit('trigger', {message: data.message, test: data.test});
+      client.broadcast.emit('trigger', {message: data.message, test: data.test,taskNum:data.taskNum});
     })
       
     client.on('disconnect', function() {
