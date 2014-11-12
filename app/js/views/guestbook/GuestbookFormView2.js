@@ -17,22 +17,20 @@ define([
   'wm',
   'rrtc',
 ], function($, _, Backbone, io, MessageModel, guestbookFormTemplate, whammy){
-  var myTimer
+  
   var GuestbookForm = Backbone.View.extend({
     el: '.guestbook-form-container',  
     events: {
-      'click #Task1' : 'taskTrigger',
-	  'click #Task2' : 'taskTrigger',
-	  'click #Task3' : 'taskTrigger',
-	  'click #Task4' : 'taskTrigger',
+      'click #start-test' : 'turnOnTrigger',
       'click #stop-me' : 'stopTrigger',
       'click .post-message': 'postMessage',
-      'click #logoff' : 'logoffTrigger',
+      'click #test-type' : 'toggleTestType',
     },
 
     //These are all the functions that run when the view is rendered
     render: function () {
       window.this = this;
+
       //When you get a 'trigger' message, do stuff with it
       window.socket.on('trigger', function(data){
         var msg = data.message.split('cl:')[0];
@@ -40,22 +38,19 @@ define([
         console.log(msg);
         var target_Client = data.message.split('cl:')[1];
         var test = data.test     
-        var task = data.taskNum
-
+        
         console.log("We got a start request");
         console.log(data);
         console.log(data.message);
         console.log(test);
         console.log(target_Client);
         console.log(window.globalSession);
-        //console.log(task)
         
         if(msg.match('stop')){
           //If you get a 'stop 'message...
           var name = msg.split("stop")[1];
           if(window.globalSession.split('cl:')[1] == name)
-            window.this.stopCamera(task);
-            //console.log('trigger'+task)
+            window.this.stopCamera();
         }
 
         if(msg=='on'){
@@ -127,93 +122,40 @@ define([
       return this; //Run the template
     },
 
-
-    taskTrigger: function(e){
-		
-      taskInfo = e.target;
-	  if (taskInfo.id == 'Task1' || taskInfo.id=='Task2')
-				{testType = 'desktop'}
-		  else	{testType = 'tablet'}
-	  if(taskInfo.value =='incomplete' || taskInfo.value == 'Stopped')
-	  {  
-      document.getElementById('stop-me').style.visibility = "visible";
-		  if(taskInfo.id == 'Task1')
-				{window.targetClient = prompt("Input tester name ("+window.client_list+")","");
-				 window.runningClients.push(window.targetClient);
-				}
-		window.this.turnOnTrigger(e,taskInfo,testType)
-	  }
-	  else{
-	  restart = window.confirm(taskInfo.id+' '+'has been completed! Restart Task?')
-	  if (restart){
-	  window.this.turnOnTrigger(e,taskInfo,testType)
-	   $(e.target).val('incomplete');}
-	  } 
+    toggleTestType: function() {
+      button = $('#test-type')[0]
+      if (button.value == 'desktop') {
+        console.log("I ran toggleTestType to tablet");
+        button.value = 'tablet';
+        $('#test-type').text("Tablet");
+      } else {
+        console.log("I ran toggleTestType to desktop");
+        button.value ='desktop';
+        $('#test-type').text("Desktop");
+      }
     },
 
-    logoffTrigger: function(e)
-    {
-      var name = prompt("Input the tester to logoff ("+window.client_list+")","");
-      window.runningClients.remove(name);
-      window.client_list.remove(name);
-      window.alert(name+' '+'successfully logged off');
-	  //console.log('name ='+ e.target.id)
-
-    },
     //This is the function to turn on a camera
-    turnOnTrigger: function(e,taskInfo,testType) {
-      //console.log(window.targetClient)
-      //window.targetClient = prompt("Input tester name ("+window.client_list+")","");
+    turnOnTrigger: function(e) {
+      window.targetClient = prompt("Input tester name ("+window.client_list+")","");
       //Send the 'turn on' trigger via sockets
-      var data = {message:'oncl:'+window.targetClient, test: testType, taskNum: taskInfo.id}
+      var data = {message:'oncl:'+window.targetClient, test: $('#test-type')[0].value}
       console.log(data)
-      console.log(testType)
       window.socket.emit('trigger', data);
-      
-      var duration = 30000;
-	    $(e.target).text(e.target.id+' '+'Commencing');
-      $('#stop-me').val(e.target.id)      
+      window.runningClients.push(window.targetClient)
+
+
       $(e.target).prop('disabled', false);
       $('#stop-me').prop('disabled', false);
       $($('video')[0]).hide();
       $("#videos").hide();
       $('.thumbnails').show();
-
-      myTimer = window.setTimeout(function(){window.this.stopTimer(e,testType,taskInfo)},duration)
-
-
     },
-
     //This is the function to turn off a camera
-    stopTimer: function(e,testtype,taskInfo) {
-     // console.log('Name:'+''+window.targetClient)
-     // console.log('isTask4?:'+''+(taskInfo.id == 'Task4'))
-      window.socket.emit('trigger', {message:'stop'+window.targetClient,test:'',taskNum: taskInfo.id});
-	  clearTimeout(myTimer);
-	  $(e.target).text(e.target.id+' '+'Completed');
-	  $(e.target).val('Completed');
-	  //console.log($(e.target).val());
-	  $('#stop-me').prop('disabled', true);
-	  if (e.target.id =='Task4'){
-	  window.alert("All tasks completed please log out the user");
-	  document.getElementById('logoff').style.visibility = "visible";
-	  //$('#logoff').style.visibility = 'visible';
-	  }
-    },
-    stopTrigger: function(e){
-         var confirmation = window.confirm("Stop the Current Task?")
-         console.log('task =' +e.target.value); 
-         curTask = document.getElementById(e.target.value);
-         
-         console.log('curTask='+curTask);
-         if (confirmation){
-		  clearTimeout(myTimer);
-          window.socket.emit('trigger',{message:'stop'+window.targetClient,test:'',taskNum: e.target.value+'_'+'incomplete'})
-		      clearTimeout(myTimer);
-          $(curTask).val("Stopped");
-          $(curTask).text(curTask.id+" "+"Stopped");
-         }
-
+    stopTrigger: function(e) {
+      var name = prompt("Input tester name ("+window.runningClients+")","");
+      window.runningClients.remove(name);
+      window.socket.emit('trigger', {message:'stop'+name, test: $('#test-type')[0].value});
     },
     toggleActivateRecordButton: function() {
         // var b = $('#record-me');
@@ -307,22 +249,20 @@ define([
     },
 
     //Function to run when you receive a 'stop' command
-    stopCamera: function(taskNum) {
+    stopCamera: function() {
       clearInterval(window.refreshIntervalId);
       //Stop all the cameras... need to spam it to compensate for FFMPEG close lag
       window.socket.emit('stop_cam', {message:"hey"});
       window.socket.emit('stop_cam', {message:"hey"});
       window.socket.emit('stop_cam', {message:"hey"});
-      window.this.embedVideoPreview(taskNum);
-      //console.log('stop camera'+taskNum)
+      window.this.embedVideoPreview();
     },
 
-    //Send the final 'vid' socket upon ending recording the video
-    embedVideoPreview: function(taskNum) {
+    //Send the final 'vid' socket upon ending recording teh video
+    embedVideoPreview: function(opt_url) {
       console.log("Now sending....");
       for(x = 0; x < window.relevantCameras.length; x++ ){
-        window.socket.emit('vid', {message:window.globalSession.split("cl:")[1]+"_"+relevantCameras[x],taskNum:taskNum});
-        //console.log('embVP'+taskNum)
+        window.socket.emit('vid', {message:window.globalSession.split("cl:")[1]+"_"+relevantCameras[x]});
       }
     },
     
@@ -349,8 +289,6 @@ define([
     }
 
   });
-
-
 
   return GuestbookForm;
 

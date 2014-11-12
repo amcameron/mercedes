@@ -402,18 +402,18 @@ webSocket.sockets.on('connection', function (client) {
       var msg = data.message+outputExtension;
       //We convert the video (app/msg/) into a .webm video, because annotate.html
       //Accepts .webm videos
-      spawn("ffmpeg", ['-i','app/'+msg+'','-s','640x480','app/'+data.message+'_'+task+'.webm']);
+      //spawn("ffmpeg", ['-i','app/'+msg+'','-s','640x480','app/'+data.message+'_'+task+'.webm']);
        var child = spawn("ffmpeg", ['-i','app/videos'+msg+'','-s','1920x1080','app/'+msg_t]);
       child.stdout.on('data', function (data) {
-        console.log('trying webm convert');
+        console.log('trying video convert');
       });
       child.on('close', function (code) {
-        console.log('finished webm convert');
+        console.log('finished video convert');
         client.broadcast.emit('vid', {message: msg,taskNum:task});
         client.broadcast.emit('remove_display', {message: msg});
       });
       child.stderr.on('data', function (data) {
-        console.log('issue with webm convert: ' + data.toString().split("time=")[1]);
+        console.log('issue with video convert: ' + data.toString().split("time=")[1]);
         client.broadcast.emit('progress', {message: mg+"Q:Q"+data.toString().split("time=")[1],taskNum: task});
       });
       

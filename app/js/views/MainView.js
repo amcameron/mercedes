@@ -138,23 +138,23 @@ define([
     window.socket.on('vid', function(data){
       var a = document.createElement("a");
       var a2 = document.createElement("a");
-      a.download = data.message.split(".")[0]+'_'+data.taskNum+".webm";
+      //a.download = data.message.split(".")[0]+'_'+data.taskNum+".webm";
       a2.download = data.message.split(".")[0]+'_'+data.taskNum+window.ext;
       if($("#lightbox-"+data.message.split(".")[0]+" label").html() != "Click here to name Camera"){
-        a.download = data.message.split(".")[0].split("_")[0]+"_"+$("#lightbox-"+'_'+data.message.split(".")[0]+" label").html()+'_'+data.taskNum+".webm";
+        //a.download = data.message.split(".")[0].split("_")[0]+"_"+$("#lightbox-"+'_'+data.message.split(".")[0]+" label").html()+'_'+data.taskNum+".webm";
         a2.download = data.message.split(".")[0].split("_")[0]+"_"+$("#lightbox-"+'_'+data.message.split(".")[0]+" label").html()+'_'+data.taskNum+window.ext;
       }
 
-      a.href = data.message.split(".")[0]+'_'+data.taskNum+".webm";
+      //a.href = data.message.split(".")[0]+'_'+data.taskNum+".webm";
       a2.href = data.message.split(".")[0]+'_'+data.taskNum+window.ext;
       $(a).html("here");
       //$(a2).html("here");
       a2.click();
-      a.click();
+      //a.click();
       if(!$("#span-"+data.message.split(".")[0]).length)
         $("#videos").append($(document.createElement("span")).attr("id","span-"+'_'+data.message.split(".")[0]));
-      $("#span-"+data.message.split(".")[0]).html('Video '+data.message.split(".")[0]+'_'+data.taskNum+'.webm finished converting. Click <a href="'+a.href+'" download="'+a.download+'">here</a> to download.<br/>');
-      //$("#span-"+data.message.split(".")[0]).html('Video '+data.message.split(".")[0]+data.taskNum+window.ext+'finished converting. Click <a href="'+a2.href+'" download="'+a2.download+'">here</a> to download.<br/>');
+      //$("#span-"+data.message.split(".")[0]).html('Video '+data.message.split(".")[0]+'_'+data.taskNum+'.webm finished converting. Click <a href="'+a.href+'" download="'+a.download+'">here</a> to download.<br/>');
+      $("#span-"+data.message.split(".")[0]).html('Video '+data.message.split(".")[0]+data.taskNum+window.ext+'finished converting. Click <a href="'+a2.href+'" download="'+a2.download+'">here</a> to download.<br/>');
       var master_Client = data.message.split('x:x')[0];
       var url = data.message.split('x:x')[1];
       $("#saveVideo").show();
