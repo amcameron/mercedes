@@ -138,7 +138,7 @@ var sendHTML = function( filePath, contentType, response ){
 
 var getFilePath = function(url) {
 
-  var filePath = './app' + url;
+  var filePath = './app/' + url;
   if (url == '/' ) filePath = './app/index.html';
 
   //console.log("url: " + url)
@@ -284,7 +284,7 @@ webSocket.sockets.on('connection', function (client) {
       var cameraNumber = data.message.split("K:K")[0];
       console.log("CAMERA NUMBER RECIEVED " + cameraNumber)
 
-      var child2 = spawn("rm", ['-Rf','app/videos'+imageName+outputExtension]);
+      var child2 = spawn("rm", ['-Rf','app/videos/'+imageName+outputExtension]);
       children.push(child2);
       child2.on('close', function (code) {
         console.log('deletedfile');
@@ -297,7 +297,7 @@ webSocket.sockets.on('connection', function (client) {
           if(ffmpegArr[k] == "[CAMERANO]"){
             ffmpegArr[k] = cameraNumber;
           } else if(ffmpegArr[k] == "[OUTPUT]"){
-            ffmpegArr[k] = 'app/videos'+imageName+outputExtension;
+            ffmpegArr[k] = 'app/videos/'+imageName+outputExtension;
           }
         }
 
@@ -403,9 +403,9 @@ webSocket.sockets.on('connection', function (client) {
       //We convert the video (app/msg/) into a .webm video, because annotate.html
       //Accepts .webm videos
       //spawn("ffmpeg", ['-i','app/'+msg+'','-s','640x480','app/'+data.message+'_'+task+'.webm']);
-       var child = spawn("ffmpeg", ['-i','app/videos'+msg+'','-s','1920x1080','app/'+msg_t]);
+       var child = spawn("ffmpeg", ['-i','app/videos/'+msg+'','-s','1280x720','app/videos/'+msg_t]);
       child.stdout.on('data', function (data) {
-        console.log('trying video convert');
+        console.log('trying video convert'); 
       });
       child.on('close', function (code) {
         console.log('finished video convert');
