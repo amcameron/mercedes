@@ -391,6 +391,12 @@ webSocket.sockets.on('connection', function (client) {
       });
     })
 
+    client.on('reload',function(data){
+      client.broadcast.emit('reload');
+      console.log('reload requested');
+    });
+
+
     //Transferring video from tester to invigilator
     client.on('vid', function(data) {
       var mg = data.message;

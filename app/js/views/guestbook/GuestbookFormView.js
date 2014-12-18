@@ -28,11 +28,14 @@ define([
       'click #stop-me' : 'stopTrigger',
       'click .post-message': 'postMessage',
       'click #logoff' : 'logoffTrigger',
+      'click #stop-test' : 'forcelogoffTrigger'
     },
 
     //These are all the functions that run when the view is rendered
     render: function () {
       window.this = this;
+      window.socket.on('reload',function(){location.reload(true);});
+
       //When you get a 'trigger' message, do stuff with it
       window.socket.on('trigger', function(data){
         var msg = data.message.split('cl:')[0];
@@ -137,18 +140,44 @@ define([
 	  if(taskInfo.value =='incomplete' || taskInfo.value == 'Stopped')
 	  {  
       document.getElementById('stop-me').style.visibility = "visible";
-		  if(taskInfo.id == 'Task1')
+		 // if(taskInfo.id == 'Task1')
+     if (window.runningClients.length == 0)
 				{window.targetClient = prompt("Input tester name ("+window.client_list+")","");
 				 window.runningClients.push(window.targetClient);
 				}
-		window.this.turnOnTrigger(e,taskInfo,testType)
+		window.this.turnOnTrigger(e,taskInfo,testType,0)
 	  }
 	  else{
 	  restart = window.confirm(taskInfo.id+' '+'has been completed! Restart Task?')
 	  if (restart){
-	  window.this.turnOnTrigger(e,taskInfo,testType)
+	  window.this.turnOnTrigger(e,taskInfo,testType,1)
 	   $(e.target).val('incomplete');}
 	  } 
+    },
+
+
+    testCompletion: function(){
+      if ($(Task1).val() == "Completed" && $(Task2).val() == "Completed" && $(Task3).val() == "Completed" && $(Task4).val() == "Completed" ) {
+      window.alert("All tasks completed please wait for download and log out the user");
+      document.getElementById('logoff').style.visibility = "visible";
+      document.getElementById('stop-test').style.visibility = "visible";
+      console.log("all Completed")
+      $('#stop-test').val("Completed")
+    }
+      else{console.log("not all Completed")}
+      $('#stop-test').val("incomplete")
+    },
+
+    forcelogoffTrigger: function(e)
+    {
+      if (e.target.value == 'incomplete')
+        {var confirmation = window.confirm("Test not complete, confirm logoff and exit ?")}
+      else{var confirmation = window.confirm("Test complete, confirm logoff and exit ?")}
+        if(confirmation)
+          {
+            window.this.logoffTrigger();
+          }
+
     },
 
     logoffTrigger: function(e)
@@ -157,11 +186,14 @@ define([
       window.runningClients.remove(name);
       window.client_list.remove(name);
       window.alert(name+' '+'successfully logged off');
+      location.reload(true);
+      window.socket.emit('reload');  
 	  //console.log('name ='+ e.target.id)
-
     },
+
+    
     //This is the function to turn on a camera
-    turnOnTrigger: function(e,taskInfo,testType) {
+    turnOnTrigger: function(e,taskInfo,testType,redu) {
       //console.log(window.targetClient)
       //window.targetClient = prompt("Input tester name ("+window.client_list+")","");
       //Send the 'turn on' trigger via sockets
@@ -170,7 +202,7 @@ define([
       console.log(testType)
       window.socket.emit('trigger', data);
       
-      var duration = 30000;
+      var duration = 10000;
 	    $(e.target).text(e.target.id+' '+'Commencing');
       $('#stop-me').val(e.target.id)      
       $(e.target).prop('disabled', false);
@@ -179,26 +211,32 @@ define([
       $("#videos").hide();
       $('.thumbnails').show();
 
-      myTimer = window.setTimeout(function(){window.this.stopTimer(e,testType,taskInfo)},duration)
-
+      if(!redu){
+      myTimer = window.setTimeout(function(){window.this.stopTimer(e,testType,taskInfo.id)},duration)
+      }
+      else
+        { myTimer = window.setTimeout(function(){window.this.stopTimer(e,testType,taskInfo.id+'_'+'Redo')},duration)
+}
 
     },
 
     //This is the function to turn off a camera
-    stopTimer: function(e,testtype,taskInfo) {
+    stopTimer: function(e,testtype,taskNum) {
      // console.log('Name:'+''+window.targetClient)
      // console.log('isTask4?:'+''+(taskInfo.id == 'Task4'))
-      window.socket.emit('trigger', {message:'stop'+window.targetClient,test:'',taskNum: taskInfo.id});
+      window.socket.emit('trigger', {message:'stop'+window.targetClient,test:'',taskNum: taskNum});
 	  clearTimeout(myTimer);
 	  $(e.target).text(e.target.id+' '+'Completed');
 	  $(e.target).val('Completed');
 	  //console.log($(e.target).val());
 	  $('#stop-me').prop('disabled', true);
-	  if (e.target.id =='Task4'){
-	  window.alert("All tasks completed please log out the user");
-	  document.getElementById('logoff').style.visibility = "visible";
+	 // if (e.target.id =='Task4'){
+	  //window.alert("All tasks completed please log out the user");
+	 // document.getElementById('logoff').style.visibility = "visible";
 	  //$('#logoff').style.visibility = 'visible';
-	  }
+	  //}
+    console.log("Stop CompTest")
+    window.this.testCompletion();
     },
     stopTrigger: function(e){
          var confirmation = window.confirm("Stop the Current Task?")
@@ -323,9 +361,14 @@ define([
       for(x = 0; x < window.relevantCameras.length; x++ ){
         window.socket.emit('vid', {message:window.globalSession.split("cl:")[1]+"_"+relevantCameras[x],taskNum:taskNum});
         //console.log('embVP'+taskNum)
+
+
       }
     },
     
+
+
+ 
     //Ignore this
     postMessage: function() {
       var that = this;
