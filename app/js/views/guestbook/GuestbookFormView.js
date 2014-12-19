@@ -134,38 +134,62 @@ define([
     taskTrigger: function(e){
 		
       taskInfo = e.target;
+      var redu = 0; 
 	  if (taskInfo.id == 'Task1' || taskInfo.id=='Task2')
 				{testType = 'desktop'}
 		  else	{testType = 'tablet'}
-	  if(taskInfo.value =='incomplete' || taskInfo.value == 'Stopped')
+
+
+	  if(taskInfo.value.split('R:R')[0] =='incomplete' || taskInfo.value.split('R:R')[0] == 'Stopped')
 	  {  
-      document.getElementById('stop-me').style.visibility = "visible";
 		 // if(taskInfo.id == 'Task1')
      if (window.runningClients.length == 0)
 				{window.targetClient = prompt("Input tester name ("+window.client_list+")","");
 				 window.runningClients.push(window.targetClient);
 				}
-		window.this.turnOnTrigger(e,taskInfo,testType,0)
+      document.getElementById('stop-me').style.visibility = "visible";
+
+        redu = 0
+		  window.this.turnOnTrigger(e,taskInfo,testType,redu)
 	  }
 	  else{
 	  restart = window.confirm(taskInfo.id+' '+'has been completed! Restart Task?')
 	  if (restart){
-	  window.this.turnOnTrigger(e,taskInfo,testType,1)
-	   $(e.target).val('incomplete');}
+      redu = 1;
+      reduNum = taskInfo.value.split('R:R')[1];
+      $(e.target).val('Incomplete'+'R:R'+reduNum);
+	   window.this.turnOnTrigger(e,taskInfo,testType,redu,reduNum)
+    }
 	  } 
+
     },
 
 
     testCompletion: function(){
-      if ($(Task1).val() == "Completed" && $(Task2).val() == "Completed" && $(Task3).val() == "Completed" && $(Task4).val() == "Completed" ) {
+
+      var T1 = $(Task1).val();
+      var T2 = $(Task2).val(); 
+      var T3 = $(Task3).val(); 
+      var T4 = $(Task4).val(); 
+
+      T1 = T1.split("R:R")[0];
+      T2 = T2.split("R:R")[0];
+      T3 = T3.split("R:R")[0];
+      T4 = T4.split("R:R")[0];
+      //console.log(T1)
+      if (T1 == "Completed" && T2 == "Completed" && T3 == "Completed" && T4 == "Completed" ) {
       window.alert("All tasks completed please wait for download and log out the user");
       document.getElementById('logoff').style.visibility = "visible";
-      document.getElementById('stop-test').style.visibility = "visible";
-      console.log("all Completed")
-      $('#stop-test').val("Completed")
-    }
-      else{console.log("not all Completed")}
-      $('#stop-test').val("incomplete")
+      document.getElementById('stop-test').style.visibility = "hidden";
+      console.log("all Completed");
+      $('#stop-test').val("Completed");
+      }
+      else {
+        console.log("not all Completed")
+        $('#stop-test').val("incomplete")
+        document.getElementById('logoff').style.visibility = "hidden";
+        document.getElementById('stop-test').style.visibility = "visible";
+        }
     },
 
     forcelogoffTrigger: function(e)
@@ -193,7 +217,7 @@ define([
 
     
     //This is the function to turn on a camera
-    turnOnTrigger: function(e,taskInfo,testType,redu) {
+    turnOnTrigger: function(e,taskInfo,testType,redu,reduNum) {
       //console.log(window.targetClient)
       //window.targetClient = prompt("Input tester name ("+window.client_list+")","");
       //Send the 'turn on' trigger via sockets
@@ -211,23 +235,37 @@ define([
       $("#videos").hide();
       $('.thumbnails').show();
 
+      window.this.testCompletion()
+      
       if(!redu){
-      myTimer = window.setTimeout(function(){window.this.stopTimer(e,testType,taskInfo.id)},duration)
+      myTimer = window.setTimeout(function(){window.this.stopTimer(e,testType,taskInfo.id,redu)},duration)
       }
       else
-        { myTimer = window.setTimeout(function(){window.this.stopTimer(e,testType,taskInfo.id+'_'+'Redo')},duration)
-}
+        { 
+          myTimer = window.setTimeout(function(){window.this.stopTimer(e,testType,taskInfo.id+'_'+'Redo'+reduNum,redu,reduNum)},duration)          
+        }
 
     },
 
     //This is the function to turn off a camera
-    stopTimer: function(e,testtype,taskNum) {
+    stopTimer: function(e,testtype,taskNum,redu,reduNum) {
      // console.log('Name:'+''+window.targetClient)
      // console.log('isTask4?:'+''+(taskInfo.id == 'Task4'))
       window.socket.emit('trigger', {message:'stop'+window.targetClient,test:'',taskNum: taskNum});
 	  clearTimeout(myTimer);
 	  $(e.target).text(e.target.id+' '+'Completed');
-	  $(e.target).val('Completed');
+
+    var butVal = $(e.target).val();
+    if (redu)
+    {
+        reduNum = parseInt(reduNum)+1;
+        $(e.target).val('Completed'+'R:R'+reduNum.toString()); 
+    }
+    else 
+    {
+      $(e.target).val('Completed'+'R:R0');
+    }
+
 	  //console.log($(e.target).val());
 	  $('#stop-me').prop('disabled', true);
 	 // if (e.target.id =='Task4'){
@@ -242,13 +280,14 @@ define([
          var confirmation = window.confirm("Stop the Current Task?")
          console.log('task =' +e.target.value); 
          curTask = document.getElementById(e.target.value);
-         
+         var curTaskTxT = $(curTask).val();
+
          console.log('curTask='+curTask);
          if (confirmation){
 		  clearTimeout(myTimer);
           window.socket.emit('trigger',{message:'stop'+window.targetClient,test:'',taskNum: e.target.value+'_'+'incomplete'})
 		      clearTimeout(myTimer);
-          $(curTask).val("Stopped");
+          $(curTask).val("Stopped"+'R:R'+curTaskTxT.split('R:R')[1]);
           $(curTask).text(curTask.id+" "+"Stopped");
          }
 
@@ -366,9 +405,6 @@ define([
       }
     },
     
-
-
- 
     //Ignore this
     postMessage: function() {
       var that = this;
