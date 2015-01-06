@@ -36,6 +36,8 @@ define([
       window.this = this;
       window.socket.on('reload',function(){location.reload(true);});
 
+ 
+
       //When you get a 'trigger' message, do stuff with it
       window.socket.on('trigger', function(data){
         var msg = data.message.split('cl:')[0];
@@ -226,7 +228,7 @@ define([
       console.log(testType)
       window.socket.emit('trigger', data);
       
-      var duration = 10000;
+      var duration = 30000;
 	    $(e.target).text(e.target.id+' '+'Commencing');
       $('#stop-me').val(e.target.id)      
       $(e.target).prop('disabled', false);

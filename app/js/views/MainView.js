@@ -131,12 +131,15 @@ define([
       if($("#lightbox-"+name+" label").html() != "Click here to name Camera"){
         string = name.split("_")[0]+"_"+$("#lightbox-"+name+" label").html();
       }
+      consol.log("name:" +name)
       $("#span-"+name).html('Converting video for '+string+'_'+data.taskNum+', please wait....elapsed time '+progress+'<br/>');
     });
 
     //Get the name of the video after it is done converting, and generate the download link
     window.socket.on('vid', function(data){
       //var a = document.createElement("a");
+            $("#videos").show();
+
       var a2 = document.createElement("a");
       //a.download = data.message.split(".")[0]+'_'+data.taskNum+".webm";
       a2.download = data.message.split(".")[0]+'_'+data.taskNum+window.ext;
@@ -152,6 +155,8 @@ define([
       //$(a).html("here");
       $(a2).html("here");
       a2.click();
+
+
       //a.click();
       if(!$("#span-"+data.message.split(".")[0]).length)
         $("#videos").append($(document.createElement("span")).attr("id","span-"+'_'+data.message.split(".")[0]));
@@ -251,7 +256,7 @@ define([
           $("#videos").show();
         }
       }
-    });
+    }); 
 
     window.socket.emit('message', {message:window.globalSession});
     var cabinView = new CabinView();

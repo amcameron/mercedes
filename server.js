@@ -251,7 +251,7 @@ webSocket.sockets.on('connection', function (client) {
           //Change bash script depending on the OS. Run ffmpeg and get 1 frame
           //vframes 1 gets 1 frame, which is basically a single image
           if(os == "osx")
-            var child = spawn("ffmpeg", ['-f','avfoundation','-i',''+cameraNumber+'','-vframes','1','app/temp/'+imageName+'_'+uniqueId+'.jpg']);
+            var child = spawn("ffmpeg", ['-f','avfoundation','-i', ''+cameraNumber+'','-vframes','1','app/temp/'+imageName+'_'+uniqueId+'.jpg']);
           else
             var child = spawn("ffmpeg", ['-f', 'v4l2', '-framerate', '25', '-video_size', '640x480', '-vframes', '1', '-i', '/dev/video'+cameraNumber, 'app/temp/'+imageName+'_'+uniqueId+'.jpg']);
           children.push(child);
@@ -406,10 +406,15 @@ webSocket.sockets.on('connection', function (client) {
       }
       var msg_t = data.message+'_'+task+outputExtension;
       var msg = data.message+outputExtension;
+      client.broadcast.emit('vid', {message: msg,taskNum:task});
+      client.broadcast.emit('remove_display', {message: msg});
+
+      var child = spawn("cp",['./app/videos/'+msg,'./app/videos/'+msg_t]);
       //We convert the video (app/msg/) into a .webm video, because annotate.html
       //Accepts .webm videos
       //spawn("ffmpeg", ['-i','app/'+msg+'','-s','640x480','app/'+data.message+'_'+task+'.webm']);
-       var child = spawn("ffmpeg", ['-i','app/videos/'+msg+'','-s','1280x720','app/videos/'+msg_t]);
+      /* var child = spawn("ffmpeg", ['-i','app/videos/'+msg+'','-s','1280x720','app/videos/'+msg_t]);
+      child.kill();
       child.stdout.on('data', function (data) {
         console.log('trying video convert'); 
       });
@@ -422,7 +427,7 @@ webSocket.sockets.on('connection', function (client) {
         console.log('issue with video convert: ' + data.toString().split("time=")[1]);
         client.broadcast.emit('progress', {message: mg+"Q:Q"+data.toString().split("time=")[1],taskNum: task});
       });
-      
+*/      
     })
 
     //Random function don't worry about this
