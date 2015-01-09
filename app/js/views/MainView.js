@@ -157,11 +157,14 @@ define([
       a2.click();
 
 
+        console.log('check:'+$("#span-"+data.message.split(".")[0]).length)
+     $("#videos").show();
       //a.click();
-      if(!$("#span-"+data.message.split(".")[0]).length)
-        $("#videos").append($(document.createElement("span")).attr("id","span-"+'_'+data.message.split(".")[0]));
+      //if(!$("#span-"+data.message.split(".")[0]).length)
+      $("#videos").append($(document.createElement("span")).attr("id","span-"+data.message.split(".")[0]+data.taskNum));
       //$("#span-"+data.message.split(".")[0]).html('Video '+data.message.split(".")[0]+'_'+data.taskNum+'.webm finished converting. Click <a href="'+a.href+'" download="'+a.download+'">here</a> to download.<br/>');
-      $("#span-"+data.message.split(".")[0]).html('Video '+data.message.split(".")[0]+'_'+data.taskNum+window.ext+' '+'finished converting. Click <a href="'+a2.href+'" download="'+a2.download+'">here</a> to download.<br/>');
+      $("#span-"+data.message.split(".")[0]+data.taskNum).html('Video '+data.message.split(".")[0]+'_'+data.taskNum+window.ext+' '+'finished recording. Click <a href="'+a2.href+'" download="'+a2.download+'">here</a> to download.<br/>');
+ 
       var master_Client = data.message.split('x:x')[0];
       var url = data.message.split('x:x')[1];
       $("#saveVideo").show();

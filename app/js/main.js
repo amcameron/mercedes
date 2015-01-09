@@ -7,7 +7,8 @@ require.config({
     underscore: 'libs/underscore/underscore-min', // https://github.com/amdjs
     backbone: 'libs/backbone/backbone-min', // https://github.com/amdjs
     io: '../socket.io/socket.io',
-    whammy: 'http://html5-demos.appspot.com/static/getusermedia/whammy.min',    
+    //whammy: 'http://html5-demos.appspot.com/static/getusermedia/whammy.min',    
+    whammy: 'libs/msr/VideoStreamRecorder/lib/whammy2',
     cbd: 'libs/msr/common/Cross-Browser-Declarations',
     os: 'libs/msr/common/ObjectStore',
     asr: 'libs/msr/AudioStreamRecorder/StereoRecorder',
