@@ -8,7 +8,7 @@ require.config({
     backbone: 'libs/backbone/backbone-min', // https://github.com/amdjs
     io: '../socket.io/socket.io',
     //whammy: 'http://html5-demos.appspot.com/static/getusermedia/whammy.min',    
-    whammy: 'libs/msr/VideoStreamRecorder/lib/whammy2',
+    whammy: 'libs/msr/VideoStreamRecorder/lib/whammy',
     cbd: 'libs/msr/common/Cross-Browser-Declarations',
     os: 'libs/msr/common/ObjectStore',
     asr: 'libs/msr/AudioStreamRecorder/StereoRecorder',
@@ -18,7 +18,7 @@ require.config({
     wrh: 'libs/msr/VideoStreamRecorder/WhammyRecorderHelper',
     gr: 'libs/msr/VideoStreamRecorder/GifRecorder',
     ge: 'libs/msr/VideoStreamRecorder/lib/gif-encoder',
-    wm: 'libs/msr/VideoStreamRecorder/lib/whammy',
+//    wm: 'libs/msr/VideoStreamRecorder/lib/whammy',
     rrtc: 'libs/recordrtc/RecordRTC',
     // Require.js plugins
     text: 'libs/require/text',
