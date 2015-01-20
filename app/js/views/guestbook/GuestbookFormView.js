@@ -14,7 +14,7 @@ define([
   'wrh',
   'gr',
   'ge',
-  'wm',
+  'whammy',
   'rrtc',
 ], function($, _, Backbone, io, MessageModel, guestbookFormTemplate, whammy){
   var myTimer
@@ -22,9 +22,9 @@ define([
     el: '.guestbook-form-container',  
     events: {
       'click #Task1' : 'taskTrigger',
-	  'click #Task2' : 'taskTrigger',
-	  'click #Task3' : 'taskTrigger',
-	  'click #Task4' : 'taskTrigger',
+	    'click #Task2' : 'taskTrigger',
+	    'click #Task3' : 'taskTrigger',
+	    'click #Task4' : 'taskTrigger',
       'click #stop-me' : 'stopTrigger',
       'click .post-message': 'postMessage',
       'click #logoff' : 'logoffTrigger',
@@ -36,7 +36,7 @@ define([
       window.this = this;
       window.socket.on('reload',function(){location.reload(true);});
 
- 
+
 
       //When you get a 'trigger' message, do stuff with it
       window.socket.on('trigger', function(data){
@@ -196,8 +196,11 @@ define([
 
     forcelogoffTrigger: function(e)
     {
+
       if (e.target.value == 'incomplete')
-        {var confirmation = window.confirm("Test not complete, confirm logoff and exit ?")}
+        {
+          $('#stop-me').click();
+          var confirmation = window.confirm("Test not complete, confirm logoff and exit ?")}
       else{var confirmation = window.confirm("Test complete, confirm logoff and exit ?")}
         if(confirmation)
           {
@@ -291,6 +294,7 @@ define([
 		      clearTimeout(myTimer);
           $(curTask).val("Stopped"+'R:R'+curTaskTxT.split('R:R')[1]);
           $(curTask).text(curTask.id+" "+"Stopped");
+          $('#stop-me').prop('disabled', true);
          }
 
     },
