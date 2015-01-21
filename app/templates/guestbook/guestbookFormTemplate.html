@@ -7,7 +7,14 @@
 				<h1 class="cover-heading">Invigilator Portal</h1>  
 				<div class="inner" style="padding: 0px;">
 					<p>There are currently <a id='numu' class="badge">0</a> tester(s).</p>
-                </div>
+				</div>
+				<div style="display:inline-block; width: intrinsic; width: -webkit-min-content; width: -moz-min-content; margin: 20px auto;">
+					Test length
+					<div class="input-group">
+						<input id="test-length" value="10" maxlength="3" style="width: 4em; text-align: right;" aria-label="Test length (in minutes)" class="form-control" type="text" inputmode="numeric" />
+						<span class="input-group-addon">min</span>
+					</div>
+				</div>
 				<div class="btn-toolbar" role="toolbar">
 					<button id="Task1" value = "incomplete" style='height: 50px;'       class="btn btn-lg btn-success">Start Task1</a>
 					<button id="Task2" value = "incomplete" style='margin-left: 2%;height: 50px ;' class="btn btn-lg btn-success">Start Task2</a>

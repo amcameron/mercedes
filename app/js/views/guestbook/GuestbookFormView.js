@@ -231,7 +231,7 @@ define([
       console.log(testType)
       window.socket.emit('trigger', data);
       
-      var duration = 30000;
+      var duration = $('#test-length').val() * 60 * 1000; // input in min, duration in ms
 	    $(e.target).text(e.target.id+' '+'Commencing');
       $('#stop-me').val(e.target.id)      
       $(e.target).prop('disabled', false);
